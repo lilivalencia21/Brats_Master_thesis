@@ -1,13 +1,22 @@
 import time
+
+from numpy import inf
+
 from functions.utilities import cross_entropy_wrapper
 import torch
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, device):
     print('Training started')
+
+    patience = 2
+    tolerance = 1E-4
+    last_loss = inf
+
     for epoch in range(max_epochs):
 
         running_loss = 0.0
+
 
         # Training
         minibatches = 0
@@ -26,14 +35,6 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device):
             optimizer.step()
 
             running_loss += loss.item()
-
-        #             # print statistics
-        #             running_loss += loss.item()
-        #             if i % 10 == 9:
-        #                 end = time.time()
-        #                 print('epoch={}'.format(epoch)+ '-'*10,
-        #                           'loss[{}]'.format(i + 1), 'Training: {0:.5f}'.format(running_loss / 10))
-        #                 running_loss = 0.0
 
         # print statistics
         print('epoch={}'.format(epoch) + '-' * 10,
@@ -56,21 +57,19 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device):
                 minibatches = i
                 running_loss += loss.item()
 
-        #                 loss_val = loss.item()
-
-        #                 # print statistics
-        #                 running_loss += loss.item()
-        #                 if i % 10 == 9:
-        #                     end = time.time()
-        #                     print('epoch={}'.format(epoch)+ '-'*10,
-        #                           'loss[{}]'.format(i + 1), 'Validation: {0:.5f}'.format(running_loss / 10))
-        #                     running_loss = 0.0
-
         # print statistics
         print('epoch={}'.format(epoch) + '-' * 10,
               'loss', 'Validation: {0:.5f}'.format(running_loss / minibatches))
-        current_loss = running_loss
+
+        #Early stopping
+        # if (abs(last_loss - running_loss) >= tolerance) and patience >= 2:
+        #     break
+        # else:
+        #     last_loss = running_loss
+        #     patience =+ 1
 
         running_loss = 0.0
 
     print('Finished Training')
+
+

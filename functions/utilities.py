@@ -92,25 +92,23 @@ def norm(image, mean, std):
     return (image - mean) / std
 
 def dice_coef(y_true, y_pred):
-    intersection = np.sum(y_true == y_pred)
+    intersection = np.sum((y_true == y_pred)*[np.logical_or(y_true, y_pred)])
 
     if intersection > 0:
-        return (2.0 * intersection) / (np.prod(y_true.shape) + np.prod(y_pred.shape))
+        return (2.0 * intersection) / (np.sum(y_true>0) + np.sum(y_pred>0))
     else:
         return 0.0
 
-def dice_multiclass(y_true, y_pred):
+def dice_multiclass(y_true, y_pred, nclasses=[0,1,2,3,4] ):
 
-    y = y_pred.copy
+    y = y_pred.copy()
     nclasses = np.unique(y_true)
-    print(nclasses)
     dice = []
     for c in nclasses:
-        print(c)
-        y[y_pred!=c] = 0
+        y[y!=c] = 0
         dice_class = dice_coef(y_true, y)
         dice.append(dice_class)
-        y = y_pred.copy
+        y = y_pred.copy()
 
     return dice
 
