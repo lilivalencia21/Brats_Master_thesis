@@ -112,6 +112,55 @@ def dice_multiclass(y_true, y_pred, nclasses=[0,1,2,3,4] ):
 
     return dice
 
+def save_segmentation_img(img_segm, original_img, path_to_save, segmetation_name):
+    result_img = nib.Nifti1Image(img_segm, original_img.affine, original_img.header)
+    image_filepath = os.path.join(path_to_save, segmetation_name)
+    print("Saving {}...".format(segmetation_name))
+    nib.save(result_img, image_filepath )
+
+    print('Segmented image saved')
+
+# def check_valid_samples(val_set, validation_txt):
+
+
+def test_cross_validation(dataset, crossvalidation_cfg):
+    model.load_state_dict(torch.load(crossvalidation_cfg['model_path']))
+    model.to(crossvalidation_cfg['device'])
+    model.eval()
+    validation_set = [get_by_name(dataset, case_name) for case_name in crossvalidation_cfg['validation_set_txt']]
+    dices = np.zeros((len(validation_set), 5))
+
+    for test_case in validation_set:
+        nifti_image = nib.load(test_case[0]['image_paths'][0])
+        intensity_images = load_images(test_case['image_paths']).astype(np.float)
+        mean = test_case['mean']
+        std_dev = test_case['std_dev']
+        input_images = np.stack([norm(image, mean, std) for image, mean, std in zip(intensity_images, mean, std_dev)])
+
+        img = np.expand_dims(input_images, axis=0)
+        test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
+
+        with torch.no_grad():
+            testing = model(test_input)
+
+        testing_np = testing.cpu().detach().numpy()
+
+
+        results = np.argmax(testing_np, axis=1)
+        segmentation_result = np.squeeze(results, axis=0)
+
+        gt = load_images(test_case['gt_path'])
+        dice = dice_multiclass(gt, result_prob)
+        dices.append(dice)
+        segm_name = '{}_segm'.format(test_case['id'])
+        save_segmentation_img(segmentation_result, nifti_image, crossvalidation_cfg['path_to_save_segm'],segm_name)
+
+
+
+
+
+
+
 
 
 

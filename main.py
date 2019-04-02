@@ -25,13 +25,19 @@ params = {'batch_size': 128,
           'shuffle': True,
           'num_workers': 64}
 
-patch_shape = (32, 32, 32)
-step = (12, 12, 12)
+patches_cfg = {'patch_shape' : (32, 32, 32),
+               'step' : (12, 12, 12),
+               'sampler' : UniformSampler}
 
-sampler = UniformSampler(patch_shape, step)
+# patch_shape = (32, 32, 32)
+# step = (12, 12, 12)
+#
+# sampler = UniformSampler(patch_shape, step)
 #sampler = BalancedSampler(patch_shape)
+model_name = 'crossvalidation'
 
-cross_validation(dataset, sampler, params, patch_shape)
+# cross_validation(dataset, sampler, params, patch_shape, model_name)
+cross_validation(dataset, params, patches_cfg, model_name)
 
 # print("Generating training instructions...")
 # instructions_train = generate_instruction(train_set, sampler, patch_shape)

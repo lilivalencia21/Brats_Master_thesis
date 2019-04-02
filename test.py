@@ -12,6 +12,13 @@ model.load_state_dict(torch.load("/home/liliana/models/net_norm_overlap.pth"))
 model.to(device)
 model.eval()
 
+#To use with test_cross_validation function.
+crossvalidation_cfg = {'model': UNet3D(),
+                       'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                       'model_path': "/home/liliana/src/src/crossvalidation_from_5_to_19_fold_1.pt",
+                       'validation_set_txt':open('/home/liliana/src/src/cases_val fold 1.txt', 'r') ,
+                       'path_to_save_segm': "/home/liliana/Results/crossvalidation_img/"}
+
 # data_dir_test = os.path.expanduser("~/Desktop/Liliana/Data/valid")
 data_dir_test = "/home/liliana/Data/valid/"
 dataset_test = load_dataset(data_dir_test)
@@ -23,7 +30,7 @@ mean = dataset_test[0]['mean']
 std_dev = dataset_test[0]['std_dev']
 input_image = np.stack([norm(image, mean, std) for image, mean, std in zip(original_image, mean, std_dev)])
 
-# load_img_norm = [norm(images,) for images in load_img]
+
 img = np.expand_dims(input_image, axis=0)
 test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
 
@@ -32,7 +39,7 @@ with torch.no_grad():
 
 testing_np = testing.cpu().detach().numpy()
 
-nclasses = 5
+# nclasses = 5
 results = np.argmax(testing_np, axis=1)
 result_prob = np.squeeze(results, axis=0)
 
