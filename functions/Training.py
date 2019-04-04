@@ -88,7 +88,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
             break
 
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load(model_name))
+    model.load_state_dict(torch.load("/home/liliana/models/crossvalidation/"+model_name))
 
     print('Finished Training')
 
@@ -126,11 +126,15 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
         for case in train_set:
             val_cases.append(case['id'])
 
-        file_train = open('cases_train fold {}.txt'.format(i+1), 'w')
+        # file_train = open('cases_train fold_{}.txt'.format(i+1), 'w')
+        # to change in future runnings to save in correct places
+        file_train = open('/home/liliana/dataToValidate/cases_train_fold_{}.txt'.format(i+1), 'w')
         file_train.write(str(train_cases))
         file_train.close()
 
-        file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
+        # file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
+        #to change in future runnings to save in correct places
+        file_val = open('/home/liliana/dataToValidate/cases_val_fold_{}.txt'.format(i+1), 'w')
         file_val.write(str(val_cases))
         file_val.close()
 
@@ -150,16 +154,18 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = UNet3D()
-        model.to(device)
+        model.to(device)cyb
+
         max_epochs = 10
         optimizer = optim.Adadelta(model.parameters())
-        model_name = '{}_from_{}_to_{}_fold_{}.pt'.format(model_name, train_idx[0], train_idx[-1], fold+1 )
-
-        train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name)
+        model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(model_name, val_idx[0], val_idx[-1], fold+1 )
+        print ('The name of the model to save is: {}'.format(model_name_fold))
+        # path_to_save_model = "/home/liliana/models/crossvalidation/"
+        train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name_fold)
 
 
     stop = time.time()
-    print('total time for training {0:.5f}'.format(stop-stop))
+    print('total time for crossvalidation {0:.5f}'.format(stop-stop))
 
 
 class EarlyStopping:
@@ -201,7 +207,7 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), self.checkpoint_name)
+        torch.save(model.state_dict(), "/home/liliana/models/crossvalidation/" + self.checkpoint_name)
         self.val_loss_min = val_loss
 
 

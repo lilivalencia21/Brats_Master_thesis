@@ -34,7 +34,7 @@ patches_cfg = {'patch_shape' : (32, 32, 32),
 #
 # sampler = UniformSampler(patch_shape, step)
 #sampler = BalancedSampler(patch_shape)
-model_name = 'crossvalidation'
+model_name = 'validationData'
 
 # cross_validation(dataset, sampler, params, patch_shape, model_name)
 cross_validation(dataset, params, patches_cfg, model_name)

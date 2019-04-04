@@ -85,5 +85,3 @@ class myDataset(Dataset):  # Inheritance
         X = torch.Tensor(X).float()
 
         return X, y
-
-

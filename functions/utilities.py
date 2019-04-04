@@ -155,22 +155,3 @@ def test_cross_validation(dataset, crossvalidation_cfg):
         segm_name = '{}_segm'.format(test_case['id'])
         save_segmentation_img(segmentation_result, nifti_image, crossvalidation_cfg['path_to_save_segm'],segm_name)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
