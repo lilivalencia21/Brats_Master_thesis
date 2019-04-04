@@ -49,23 +49,12 @@ def extract_patch(instruction, dataset):
 
     # get volume
     volume_images = case_dict['images'].astype(np.float)
-
-    # cv2.imwrite('T1_img.jpg', volume_images[0, :, :, 80])
-
-    #volume_images_norm = np.stack([norm(image, mean, std) for image, mean, std in zip(volume_images, mean, std_dev)])
-
-    # cv2.imwrite('T1_img_norm.jpg', volume_images_norm[0, :, :, 80])
-
-    # If I want to change the label label_mapping={4:3}
     volume_gt = case_dict['gt']
 
     # apply slice to volume
     X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
 
     X_patch = norm_array(X_patch, case_dict['mean'], case_dict['std_dev'])
-
-    # X_patch shape (4, 32, 32, 32)
-    # cv2.imwrite('T1_patch.jpg', X_patch[0, :, :, 16])
 
     y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
 

@@ -135,7 +135,8 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
         # file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
         #to change in future runnings to save in correct places
         file_val = open('/home/liliana/dataToValidate/cases_val_fold_{}.txt'.format(i+1), 'w')
-        file_val.write(str(val_cases))
+        for val_case in val_cases:
+            file_val.write(str(val_case))
         file_val.close()
 
         sampler = patches_cfg['sampler'](patches_cfg['patch_shape'], patches_cfg['step'])
@@ -154,7 +155,7 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = UNet3D()
-        model.to(device)cyb
+        model.to(device)
 
         max_epochs = 10
         optimizer = optim.Adadelta(model.parameters())

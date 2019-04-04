@@ -92,24 +92,25 @@ def norm(image, mean, std):
     return (image - mean) / std
 
 def dice_coef(y_true, y_pred):
-    intersection = np.sum((y_true == y_pred)*[np.logical_or(y_true, y_pred)])
+    # intersection = np.sum((y_true == y_pred)*[np.logical_or(y_true, y_pred)])
+    intersection = np.sum(np.logical_and(y_true, y_pred))
 
     if intersection > 0:
         return (2.0 * intersection) / (np.sum(y_true>0) + np.sum(y_pred>0))
     else:
         return 0.0
 
-def dice_multiclass(y_true, y_pred, nclasses=[0,1,2,3,4] ):
+def dice_multiclass(y_true, y_pred):
 
     y = y_pred.copy()
     nclasses = np.unique(y_true)
     dice = []
     for c in nclasses:
-        y[y!=c] = 0
-        dice_class = dice_coef(y_true, y)
+        # y[y!=c] = 0
+        seg = y == c
+        gt = y_true == c
+        dice_class = dice_coef(gt, seg)
         dice.append(dice_class)
-        y = y_pred.copy()
-
     return dice
 
 def save_segmentation_img(img_segm, original_img, path_to_save, segmetation_name):
@@ -124,14 +125,20 @@ def save_segmentation_img(img_segm, original_img, path_to_save, segmetation_name
 
 
 def test_cross_validation(dataset, crossvalidation_cfg):
+
+    model = crossvalidation_cfg['model']
     model.load_state_dict(torch.load(crossvalidation_cfg['model_path']))
     model.to(crossvalidation_cfg['device'])
     model.eval()
-    validation_set = [get_by_name(dataset, case_name) for case_name in crossvalidation_cfg['validation_set_txt']]
-    dices = np.zeros((len(validation_set), 5))
+    device = crossvalidation_cfg['device']
+
+    validation_set = load_validation_cases(dataset, crossvalidation_cfg['training_set_txt'])
+    # dices = np.zeros((len(validation_set), 5))
+    dices = []
+    dices_file = open(crossvalidation_cfg['path_to_save_txt'], 'ab')
 
     for test_case in validation_set:
-        nifti_image = nib.load(test_case[0]['image_paths'][0])
+        nifti_image = nib.load(test_case['image_paths'][0])
         intensity_images = load_images(test_case['image_paths']).astype(np.float)
         mean = test_case['mean']
         std_dev = test_case['std_dev']
@@ -150,8 +157,27 @@ def test_cross_validation(dataset, crossvalidation_cfg):
         segmentation_result = np.squeeze(results, axis=0)
 
         gt = load_images(test_case['gt_path'])
-        dice = dice_multiclass(gt, result_prob)
-        dices.append(dice)
-        segm_name = '{}_segm'.format(test_case['id'])
+        dice = dice_multiclass(gt, segmentation_result)
+        print('Dice for case {} is {}'.format(test_case['id'], dice))
+        np.savetxt(dices_file, dice, fmt='%10.5f')
+        segm_name = '{}_seg.nii.gz'.format(test_case['id'])
+        print('Saving image segmentation result as {}'.format(segm_name))
         save_segmentation_img(segmentation_result, nifti_image, crossvalidation_cfg['path_to_save_segm'],segm_name)
 
+    # print('Saving dice scores..........')
+    # path = crossvalidation_cfg['path_to_save_txt']
+    # np.savetxt(path, dices, fmt='%10.5f')
+    dices_file.close()
+
+def load_validation_cases(dataset, training_set_txt):
+
+    training_set = []
+    with open(training_set_txt) as f:
+        training_set = [line.rstrip('\n') for line in f]
+
+    validation_set = []
+    for case in dataset:
+        if case['id'] not in training_set:
+            validation_set.append(case)
+
+    return validation_set
