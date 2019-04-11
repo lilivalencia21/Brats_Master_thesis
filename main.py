@@ -49,6 +49,7 @@ experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_
 
 
 cross_validation(dataset, params, experiment_nnn_cfg)
+
 # cross_validation(dataset, params_nnn, experiment_nnn_cfg)
 
 # print("Generating training instructions...")

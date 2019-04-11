@@ -34,6 +34,7 @@ class UNet3D(nn.Module):
         return x_out
 
 class UNet3DNNN(nn.Module):
+    """ No New Net model"""
 
     def __init__(self):
         super().__init__()

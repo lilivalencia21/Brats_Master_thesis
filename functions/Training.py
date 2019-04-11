@@ -13,8 +13,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
     print('Training started')
 
     patience = patience
-    # tolerance = 1E-4
-    # last_loss = inf
+
     # to track the training loss and accuracy as the model trains
     train_losses = []
     train_accuracies = []

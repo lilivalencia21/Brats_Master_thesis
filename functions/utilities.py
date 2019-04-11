@@ -62,13 +62,6 @@ def load_dataset(data_dir_train):
 
 def load_images(paths):
     images = np.stack([nib.load(modality_path).get_data() for modality_path in paths])
-
-    #     cv2.imwrite('T1_img.jpg',images[0,:,:,80])
-
-    #     if label_mapping is not None:
-    #         for l_in, l_out in label_mapping.items():
-    #             images[images==l_in]=l_out
-
     return images
 
 
@@ -77,17 +70,20 @@ def get_by_name(dataset, name):
         if case['id'] is name:
             return case
 
-
-
-def norm_array(image, mean, std):
-    image_out = np.copy(image)
+def norm_array(images, mean, std):
+    """
+    :param images: array of modality images
+    :param mean: vector containing the mean of each modality
+    :param std: vector containing the standard deviation of each modality
+    :return: normalize images between 0 and 1
+    """
+    image_out = np.copy(images)
     image_out = image_out.astype(np.float)
     for mod_idx, (m, s) in enumerate(zip(mean, std)):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
 
 def dice_coef(y_true, y_pred):
-    # intersection = np.sum((y_true == y_pred)*[np.logical_or(y_true, y_pred)])
     intersection = np.sum(np.logical_and(y_true, y_pred))
 
     if intersection > 0:
@@ -96,7 +92,11 @@ def dice_coef(y_true, y_pred):
         return 0.0
 
 def dice_multiclass(y_true, y_pred):
-
+    """
+    :param y_true: ground thruth segmentation [1,240, 240, 240]
+    :param y_pred: Segmentation prediction after argmax and squeeze [1,240, 240, 240]
+    :return: float, dice score
+    """
     y = y_pred.copy()
     nclasses = np.unique(y_true)
     dice = []
@@ -108,15 +108,13 @@ def dice_multiclass(y_true, y_pred):
         dice.append(dice_class)
     return dice
 
-def save_segmentation_img(img_segm, original_img, path_to_save, segmetation_name):
+def save_segmentation_img(img_segm, original_img, path_to_save, segmentation_name):
     result_img = nib.Nifti1Image(img_segm, original_img.affine, original_img.header)
-    image_filepath = os.path.join(path_to_save, segmetation_name)
-    print("Saving {}...".format(segmetation_name))
+    image_filepath = os.path.join(path_to_save, segmentation_name)
+    print("Saving {}...".format(segmentation_name))
     nib.save(result_img, image_filepath )
 
     print('Segmented image saved')
-
-# def check_valid_samples(val_set, validation_txt):
 
 
 def test_cross_validation(dataset, crossvalidation_cfg):
@@ -173,6 +171,7 @@ def load_validation_cases(dataset, training_set_txt):
 
     return validation_set
 
+#Albert's function
 def nic_binary_accuracy(y_pred, y_true, class_dim=1):
     """
     from Keras: K.mean(K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)))
@@ -180,13 +179,3 @@ def nic_binary_accuracy(y_pred, y_true, class_dim=1):
     y_true = torch.squeeze(y_true.long(), dim=class_dim)
     y_pred_categorical = torch.argmax(y_pred, dim=class_dim)
     return torch.mean(torch.eq(y_true, y_pred_categorical).float())
-
-
-
-
-
-
-
-
-
-

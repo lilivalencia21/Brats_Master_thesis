@@ -1,6 +1,10 @@
 import torch
 
 def to_categorical(target):
+    """
+    :param target: target image tensor [bs, 1, patch_size_x, patch_size_y, patch_size_z]
+    :return: tensor [bs, num_labels, patch_size_x, patch_size_y, patch_size_z]
+    """
     # input
     # target - tensor with size [bs, 1, patch_size_x, patch_size_y, patch_size_z]
     # output
@@ -13,6 +17,11 @@ def to_categorical(target):
     return target_cat
 
 def cross_entropy_wrapper(pred, GT):
+    """
+    :param pred: model output
+    :param GT: target patches
+    :return: crossentropy loss
+    """
     labels = GT.squeeze(1).long()
     loss = nn.CrossEntropyLoss()
     return loss(torch.log(torch.clamp(pred, 1E-7, 1.0)), labels)
@@ -26,10 +35,3 @@ def dice_loss(output, target):
     loss = torch.mean((-2.0 / 5) * torch.sum((den/num), dim=1))
 
     return loss
-
-
-
-
-
-
-

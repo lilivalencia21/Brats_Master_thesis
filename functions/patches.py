@@ -27,6 +27,12 @@ def get_patch_slices(centers, patch_shape, step=None):
 
 
 def get_centers_unif(vol_shape, patch_shape, unif_step):
+    """
+    :param vol_shape: tuple of 3 elements
+    :param patch_shape: tuple of 3 elements
+    :param unif_step: step between patches
+    :return: list of  3D coordinates where the center of the patch will be located
+    """
     assert len(vol_shape) == len(patch_shape) == len(unif_step)
 
     dim_ranges = []
