@@ -12,13 +12,16 @@ class Sampler(ABC):
         pass
 
 class UniformSampler(Sampler):
-    def __init__(self, patch_shape, unif_step):
+    def __init__(self, patch_shape, unif_step, num_elements=None):
         self.patch_shape = patch_shape
         self.unif_step = unif_step
+        self.num_elements = num_elements
 
     def get_centers(self, case):
         vol_shape = case['nifti_headers'][0]['dim'][1:4]
-        return get_centers_unif(vol_shape, self.patch_shape, self.unif_step)
+        centers = get_centers_unif(vol_shape, self.patch_shape, self.unif_step)
+
+        return centers[:self.num_elements] if self.num_elements is not None else centers
 
 
 class BalancedSampler(Sampler):
@@ -50,18 +53,20 @@ def generate_instruction(dataset, sampler, patch_shape):
     return instructions
 
 
-class myDataset(Dataset):  # Inheritance
+class BratsDatasetLoader(Dataset):  # Inheritance
     def __init__(self, dataset, instructions):
         """
         Constructor of myDataset.
         """
         self.dataset = dataset
-        # TODO preload images in self.dataset
-        #load_images(case_dict['image_paths'])
 
         print("Preloading images...")
         for case_idx in range(len(self.dataset)):
             self.dataset[case_idx]['images'] = load_images(self.dataset[case_idx]['image_paths'])
+            #Added to try to optimize time
+            self.dataset[case_idx]['norm_images']=norm_array(self.dataset[case_idx]['images'],self.dataset[case_idx]['mean'],
+                                                             self.dataset[case_idx]['std_dev'])
+
             self.dataset[case_idx]['gt'] = load_images(self.dataset[case_idx]['gt_path'])
 
         self.instructions = instructions

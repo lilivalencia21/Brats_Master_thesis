@@ -20,10 +20,19 @@ crossvalidation_cfg = {'model': UNet3D(),
                        'path_to_save_segm': "/home/liliana/Results/crossvalidation_img/Fold_2",
                        'path_to_save_txt': "/home/liliana/Results/crossvalidation_img/Fold_2/"+ 'fold_2.txt'}
 
+crossval_optim_cfg = {'model': UNet3D(),
+                       'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                       'model_path': "/home/liliana/models/crossvalidation_opt/validationData_from_0_to_4_fold_1.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/optimizing/cases_train_fold_1.txt",
+                       'path_to_save_segm': "/home/liliana/Results/crossval_optim/Fold_1/",
+                       'path_to_save_txt': "/home/liliana/Results/crossval_optim/Fold_1/"+ 'fold_1.txt'}
+
+
+
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 
-test_cross_validation(dataset_test, crossvalidation_cfg)
+test_cross_validation(dataset_test, crossval_optim_cfg)
 
 
 

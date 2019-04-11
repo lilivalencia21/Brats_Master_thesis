@@ -1,0 +1,35 @@
+import torch
+
+def to_categorical(target):
+    # input
+    # target - tensor with size [bs, 1, patch_size_x, patch_size_y, patch_size_z]
+    # output
+    # target_cat - tensor with size [bs, num_classes, patch_size_x, patch_size_y, patch_size_z]
+    target_channels = []
+    for n in range(5):
+        target_channels.append((target[:, : , ...] == n).float())
+    target_cat = torch.cat(target_channels, dim=1)
+
+    return target_cat
+
+def cross_entropy_wrapper(pred, GT):
+    labels = GT.squeeze(1).long()
+    loss = nn.CrossEntropyLoss()
+    return loss(torch.log(torch.clamp(pred, 1E-7, 1.0)), labels)
+
+def dice_loss(output, target):
+    target_tocat = to_categorical(target)   #convert tensor from [bs, 1,..] to [bs, 5, ...]
+    reduction_dim = (1, 2, 3)
+    den = torch.sum(output * target_tocat, dim=reduction_dim)
+    num = torch.sum(output, dim=reduction_dim) + torch.sum(target_tocat, dim=reduction_dim)
+
+    loss = torch.mean((-2.0 / 5) * torch.sum((den/num), dim=1))
+
+    return loss
+
+
+
+
+
+
+

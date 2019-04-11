@@ -43,19 +43,37 @@ def get_centers_unif(vol_shape, patch_shape, unif_step):
     return centers
 
 
+# def extract_patch(instruction, dataset):
+#     # get case_dict with 'id'
+#     case_dict = get_by_name(dataset, instruction['id'])
+#
+#     # get volume
+#     volume_images = case_dict['images'].astype(np.float)
+#     volume_gt = case_dict['gt']
+#
+#     # apply slice to volume
+#     X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
+#
+#     X_patch = norm_array(X_patch, case_dict['mean'], case_dict['std_dev'])
+#
+#     y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
+#
+#     return X_patch, y_patch
+
+#Testing changes in function to optimize time
 def extract_patch(instruction, dataset):
     # get case_dict with 'id'
     case_dict = get_by_name(dataset, instruction['id'])
 
     # get volume
-    volume_images = case_dict['images'].astype(np.float)
+    volume_images = case_dict['norm_images']
     volume_gt = case_dict['gt']
 
     # apply slice to volume
-    X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
-
-    X_patch = norm_array(X_patch, case_dict['mean'], case_dict['std_dev'])
-
-    y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
+    # X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
+    X_patch = volume_images[instruction['data_slice']]
+    # X_patch = norm_array(X_patch, case_dict['mean'], case_dict['std_dev'])
+    y_patch = volume_gt[instruction['data_slice']]
+    # y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
 
     return X_patch, y_patch

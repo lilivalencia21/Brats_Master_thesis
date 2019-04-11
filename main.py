@@ -21,23 +21,35 @@ train_percentage = 0.8
 train_set, val_set = split_dataset(dataset, train_percentage)
 
 # Parameters for dataloader
-params = {'batch_size': 128,
+params = {'batch_size': 16,
           'shuffle': True,
           'num_workers': 64}
 
-patches_cfg = {'patch_shape' : (32, 32, 32),
+experiment_cfg = {'patch_shape' : (32, 32, 32),
                'step' : (12, 12, 12),
-               'sampler' : UniformSampler}
+               'epochs': 10,
+               'model_name': 'validationData',
+                'patience': 3 }
+experiment_cfg.update({'sampler' : UniformSampler(experiment_cfg['patch_shape'], experiment_cfg['step'], num_elements=None)})
 
-# patch_shape = (32, 32, 32)
-# step = (12, 12, 12)
+
+#Experiment configuration No new-Net
+params_nnn = {'batch_size':2,
+          'shuffle': True,
+          'num_workers': 64}
 #
-# sampler = UniformSampler(patch_shape, step)
-#sampler = BalancedSampler(patch_shape)
-model_name = 'validationData'
+experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
+               'step' :  (12, 12, 12),
+               'sampler' : UniformSampler,
+               'epochs': 10,
+               'model_name': 'UNetDiceLoss',
+                'patience': 3}
 
-# cross_validation(dataset, sampler, params, patch_shape, model_name)
-cross_validation(dataset, params, patches_cfg, model_name)
+experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'], num_elements=None)})
+
+
+cross_validation(dataset, params, experiment_nnn_cfg)
+# cross_validation(dataset, params_nnn, experiment_nnn_cfg)
 
 # print("Generating training instructions...")
 # instructions_train = generate_instruction(train_set, sampler, patch_shape)

@@ -77,19 +77,14 @@ def get_by_name(dataset, name):
         if case['id'] is name:
             return case
 
-def cross_entropy_wrapper(pred, GT):
-    labels = GT.squeeze(1).long()
-    loss = nn.CrossEntropyLoss()
-    return loss(torch.log(torch.clamp(pred, 1E-7, 1.0)), labels)
+
 
 def norm_array(image, mean, std):
     image_out = np.copy(image)
+    image_out = image_out.astype(np.float)
     for mod_idx, (m, s) in enumerate(zip(mean, std)):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
-
-def norm(image, mean, std):
-    return (image - mean) / std
 
 def dice_coef(y_true, y_pred):
     # intersection = np.sum((y_true == y_pred)*[np.logical_or(y_true, y_pred)])
@@ -133,9 +128,7 @@ def test_cross_validation(dataset, crossvalidation_cfg):
     device = crossvalidation_cfg['device']
 
     validation_set = load_validation_cases(dataset, crossvalidation_cfg['training_set_txt'])
-    # dices = np.zeros((len(validation_set), 5))
-    dices = []
-    dices_file = open(crossvalidation_cfg['path_to_save_txt'], 'ab')
+    dices_file = open(crossvalidation_cfg['path_to_save_txt'], 'w')
 
     for test_case in validation_set:
         nifti_image = nib.load(test_case['image_paths'][0])
@@ -159,14 +152,12 @@ def test_cross_validation(dataset, crossvalidation_cfg):
         gt = load_images(test_case['gt_path'])
         dice = dice_multiclass(gt, segmentation_result)
         print('Dice for case {} is {}'.format(test_case['id'], dice))
-        np.savetxt(dices_file, dice, fmt='%10.5f')
+        dices_file.write('{} \n {} \n'.format(test_case['id'], str(dice)))
         segm_name = '{}_seg.nii.gz'.format(test_case['id'])
         print('Saving image segmentation result as {}'.format(segm_name))
         save_segmentation_img(segmentation_result, nifti_image, crossvalidation_cfg['path_to_save_segm'],segm_name)
 
-    # print('Saving dice scores..........')
-    # path = crossvalidation_cfg['path_to_save_txt']
-    # np.savetxt(path, dices, fmt='%10.5f')
+    print('Saving dice scores..........')
     dices_file.close()
 
 def load_validation_cases(dataset, training_set_txt):
@@ -181,3 +172,21 @@ def load_validation_cases(dataset, training_set_txt):
             validation_set.append(case)
 
     return validation_set
+
+def nic_binary_accuracy(y_pred, y_true, class_dim=1):
+    """
+    from Keras: K.mean(K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)))
+    """
+    y_true = torch.squeeze(y_true.long(), dim=class_dim)
+    y_pred_categorical = torch.argmax(y_pred, dim=class_dim)
+    return torch.mean(torch.eq(y_true, y_pred_categorical).float())
+
+
+
+
+
+
+
+
+
+

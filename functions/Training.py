@@ -1,24 +1,26 @@
 import time
 from numpy import inf
 import numpy as np
-from functions.utilities import cross_entropy_wrapper
 import torch
 import operator
 import torch.optim as optim
 from functions.instructions import *
 from functions.nets import *
+from functions.loss_function import *
 
 
-def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name):
+def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name, patience=3):
     print('Training started')
 
-    patience = 3
+    patience = patience
     # tolerance = 1E-4
     # last_loss = inf
-    # to track the training loss as the model trains
+    # to track the training loss and accuracy as the model trains
     train_losses = []
-    # to track the validation loss as the model trains
+    train_accuracies = []
+    # to track the validation loss and accuracy as the model trains
     valid_losses = []
+    valid_accuracies = []
 
     # initialize the early_stopping object
     early_stopping = EarlyStopping(model_name, patience=patience, verbose=True)
@@ -26,7 +28,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
     for epoch in range(max_epochs):
 
         running_loss = 0.0
-
+        running_accuracy = 0.0
+        start = time.time()
 
         # Training
         minibatches = 0
@@ -40,18 +43,26 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
 
             output = model(local_batch)
 
-            loss = cross_entropy_wrapper(output, target)
+            # loss = cross_entropy_wrapper(output, target)
+            loss = dice_loss(output, target)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
             running_loss += loss.item()
+            accuracy = nic_binary_accuracy(output, target)
+            train_accuracies.append(accuracy)
+            running_accuracy += accuracy.item()
+
 
         # print statistics
-        print('epoch={}'.format(epoch) + '-' * 10,
-              'loss', 'Training: {0:.5f}'.format(running_loss / minibatches))
+        print('epoch={}'.format(epoch+1) + '-' * 10,
+              'loss', 'Training: {0:.5f}'.format(running_loss / (minibatches+1)),
+              'Accuracy: {0:.5f}'.format(running_accuracy / (minibatches+1)))
 
         running_loss = 0.0
         minibatches = 0.0
+        running_accuracy = 0.0
+
 
         # Validation
         with torch.set_grad_enabled(False):
@@ -62,22 +73,31 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
-                loss = cross_entropy_wrapper(output, target)
+                # loss = cross_entropy_wrapper(output, target)
+                loss = dice_loss(output, target)
+
                 minibatches = i
                 valid_losses.append(loss.item())
                 running_loss += loss.item()
-
                 valid_loss = np.average(valid_losses)
 
+                accuracy = nic_binary_accuracy(output, target)
+                valid_accuracies.append(accuracy)
+                running_accuracy += accuracy.item()
+
         # print statistics
-        print('epoch={}'.format(epoch) + '-' * 10,
-              'loss', 'Validation: {0:.5f}'.format(running_loss / minibatches))
+        print('epoch={}'.format(epoch+1) + '-' * 10,
+              'loss', 'Validation: {0:.5f}'.format(running_loss / (minibatches+1)),
+              'Accuracy: {}'.format(running_accuracy / (minibatches+1)))
 
         running_loss = 0.0
+        running_accuracy = 0.0
 
         # clear lists to track next epoch
         train_losses = []
         valid_losses = []
+        train_accuracies = []
+        valid_accuracies = []
 
         # early_stopping needs the validation loss to check if it has decresed,
         # and if it has, it will make a checkpoint of the current model
@@ -87,14 +107,19 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
             print("Early stopping")
             break
 
+        stop = time.time()
+        print('Epoch time {0:.5f} seconds'.format((stop-start)))
+        start = 0.0
+        stop = 0.0
+
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load("/home/liliana/models/crossvalidation/"+model_name))
+    model.load_state_dict(torch.load("/home/liliana/models/NoNewNetCfg/"+model_name))
 
     print('Finished Training')
 
 
 
-def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
+def cross_validation(dataset, params, experiment_cfg, folds=4):
 
     start = time.time()
 
@@ -107,8 +132,6 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
         print('=====================================')
         print('Fold Number ', i + 1)
         print('=====================================')
-        # Restart the model
-        # model = UNet3D().to(device)
 
         # Get the indexes of the cases used for training. The rest are for validation
         val_idx = indexes[i * num:(i + 1) * num]
@@ -123,50 +146,53 @@ def cross_validation(dataset, params, patches_cfg, model_name, folds=4):
             train_cases.append(case['id'])
 
         val_cases = []
-        for case in train_set:
+        for case in val_set:
             val_cases.append(case['id'])
 
         # file_train = open('cases_train fold_{}.txt'.format(i+1), 'w')
         # to change in future runnings to save in correct places
-        file_train = open('/home/liliana/dataToValidate/cases_train_fold_{}.txt'.format(i+1), 'w')
-        file_train.write(str(train_cases))
+        trainStr = '\n'.join([str(elem) for elem in train_cases])
+        file_train = open('/home/liliana/dataToValidate/NoNewNetData/cases_train_fold_{}.txt'.format(i+1), 'w')
+        file_train.write(trainStr)
         file_train.close()
 
         # file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
         #to change in future runnings to save in correct places
-        file_val = open('/home/liliana/dataToValidate/cases_val_fold_{}.txt'.format(i+1), 'w')
-        for val_case in val_cases:
-            file_val.write(str(val_case))
+        valStr = '\n'.join([str(elem) for elem in val_cases])
+        file_val = open('/home/liliana/dataToValidate/NoNewNetData/cases_val_fold_{}.txt'.format(i+1), 'w')
+        file_val.write(valStr)
         file_val.close()
 
-        sampler = patches_cfg['sampler'](patches_cfg['patch_shape'], patches_cfg['step'])
+        sampler = experiment_cfg['sampler']
 
         print("Generating training instructions...")
-        instructions_train = generate_instruction(train_set, sampler, patches_cfg['patch_shape'])
-        train_data = myDataset(train_set, instructions_train)
+        instructions_train = generate_instruction(train_set, sampler, experiment_cfg['patch_shape'])
+        train_data = BratsDatasetLoader(train_set, instructions_train)
         train_gen = torch.utils.data.DataLoader(train_data, **params)
         print("Generated {} training instructions from {} images".format(len(instructions_train), len(train_set)))
 
         print("Generating validation instructions...")
-        instructions_val = generate_instruction(val_set, sampler, patches_cfg['patch_shape'])
-        val_data = myDataset(val_set, instructions_val)
+        instructions_val = generate_instruction(val_set, sampler, experiment_cfg['patch_shape'])
+        val_data = BratsDatasetLoader(val_set, instructions_val)
         val_gen = torch.utils.data.DataLoader(val_data, **params)
         print("Generated {} validation instructions from {} images".format(len(instructions_val), len(val_set)))
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = UNet3D()
+        # model = UNet3DNNN()
         model.to(device)
 
-        max_epochs = 10
+        max_epochs = experiment_cfg['epochs']
         optimizer = optim.Adadelta(model.parameters())
-        model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(model_name, val_idx[0], val_idx[-1], fold+1 )
+        model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(experiment_cfg['model_name'], val_idx[0], val_idx[-1], fold+1 )
         print ('The name of the model to save is: {}'.format(model_name_fold))
         # path_to_save_model = "/home/liliana/models/crossvalidation/"
-        train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name_fold)
+        patience = experiment_cfg['patience']
+        train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name_fold, patience)
 
 
     stop = time.time()
-    print('total time for crossvalidation {0:.5f}'.format(stop-stop))
+    print('total time for crossvalidation {0:.5f} minutes'.format((stop-start)/60))
 
 
 class EarlyStopping:
@@ -208,7 +234,4 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), "/home/liliana/models/crossvalidation/" + self.checkpoint_name)
-        self.val_loss_min = val_loss
-
-
+        torch.save(model.state_dict(), "/home/liliana/models/NoNewNetCfg/" + self.checkpoint_name)
