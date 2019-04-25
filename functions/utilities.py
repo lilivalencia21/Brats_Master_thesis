@@ -83,6 +83,9 @@ def norm_array(images, mean, std):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
 
+def norm(image, mean, std):
+    return (image - mean) / std
+
 def dice_coef(y_true, y_pred):
     intersection = np.sum(np.logical_and(y_true, y_pred))
 
@@ -130,10 +133,12 @@ def test_cross_validation(dataset, crossvalidation_cfg):
 
     for test_case in validation_set:
         nifti_image = nib.load(test_case['image_paths'][0])
-        intensity_images = load_images(test_case['image_paths']).astype(np.float)
+        # intensity_images = load_images(test_case['image_paths']).astype(np.float)
+        intensity_images = load_images(test_case['image_paths'])
         mean = test_case['mean']
         std_dev = test_case['std_dev']
-        input_images = np.stack([norm(image, mean, std) for image, mean, std in zip(intensity_images, mean, std_dev)])
+        # input_images = np.stack([norm(image, mean, std) for image, mean, std in zip(intensity_images, mean, std_dev)])
+        input_images = norm_array(intensity_images, mean, std_dev)
 
         img = np.expand_dims(input_images, axis=0)
         test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)

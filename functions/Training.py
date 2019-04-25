@@ -7,6 +7,7 @@ import torch.optim as optim
 from functions.instructions import *
 from functions.nets import *
 from functions.loss_function import *
+import copy
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name, patience=3):
@@ -14,15 +15,16 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
 
     patience = patience
 
-    # to track the training loss and accuracy as the model trains
+    # track the training loss and accuracy as the model trains
     train_losses = []
     train_accuracies = []
-    # to track the validation loss and accuracy as the model trains
+    # track the validation loss and accuracy as the model trains
     valid_losses = []
     valid_accuracies = []
 
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(model_name, patience=patience, verbose=True)
+    # early_stopping = EarlyStopping(model_name, patience=patience, verbose=True)
+    early_stopping = Early_Stopping(patience=patience, verbose=True)
 
     for epoch in range(max_epochs):
 
@@ -72,8 +74,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
-                # loss = cross_entropy_wrapper(output, target)
-                loss = dice_loss(output, target)
+                loss = cross_entropy_wrapper(output, target)
+                # loss = dice_loss(output, target)
 
                 minibatches = i
                 valid_losses.append(loss.item())
@@ -112,7 +114,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
         stop = 0.0
 
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load("/home/liliana/models/NoNewNetCfg/"+model_name))
+    # model.load_state_dict(torch.load("/home/liliana/models/NoNewNet/"+model_name))
+    torch.save(early_stopping.best_model, "/home/liliana/models/NoNewNet/" + model_name)
 
     print('Finished Training')
 
@@ -151,14 +154,16 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         # file_train = open('cases_train fold_{}.txt'.format(i+1), 'w')
         # to change in future runnings to save in correct places
         trainStr = '\n'.join([str(elem) for elem in train_cases])
-        file_train = open('/home/liliana/dataToValidate/NoNewNetData/cases_train_fold_{}.txt'.format(i+1), 'w')
+        # file_train = open('/home/liliana/dataToValidate/NoNewNet/cases_train_fold_{}.txt'.format(i+1), 'w')
+        file_train = open(experiment_cfg['pathToSaveTxt']+'/cases_train_fold_{}.txt'.format(i+1), 'w')
         file_train.write(trainStr)
         file_train.close()
 
         # file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
         #to change in future runnings to save in correct places
         valStr = '\n'.join([str(elem) for elem in val_cases])
-        file_val = open('/home/liliana/dataToValidate/NoNewNetData/cases_val_fold_{}.txt'.format(i+1), 'w')
+        # file_val = open('/home/liliana/dataToValidate/NoNewNet/cases_val_fold_{}.txt'.format(i+1), 'w')
+        file_val = open(experiment_cfg['pathToSaveTxt']+'/cases_val_fold_{}.txt'.format(i+1), 'w')
         file_val.write(valStr)
         file_val.close()
 
@@ -194,43 +199,78 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
     print('total time for crossvalidation {0:.5f} minutes'.format((stop-start)/60))
 
 
-class EarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, checkpoint_model_name, patience=3, verbose=False ):
-        """
-        Args:
-            patience (int): How long to wait after last time validation loss improved.
-                            Default: 7
-            verbose (bool): If True, prints a message for each validation loss improvement.
-                            Default: False
-        """
+# class EarlyStopping:
+#     """Early stops the training if validation loss doesn't improve after a given patience."""
+#     def __init__(self, checkpoint_model_name, patience=3, verbose=False ):
+#         """
+#         Args:
+#             patience (int): How long to wait after last time validation loss improved.
+#                             Default: 3
+#             verbose (bool): If True, prints a message for each validation loss improvement.
+#                             Default: False
+#         """
+#         self.patience = patience
+#         self.verbose = verbose
+#         self.counter = 0
+#         self.best_score = None
+#         self.early_stop = False
+#         self.val_loss_min = np.Inf
+#         self.checkpoint_name = checkpoint_model_name
+#
+#     def __call__(self, val_loss, model):
+#
+#         score = -val_loss
+#
+#         if self.best_score is None:
+#             self.best_score = score
+#             self.save_checkpoint(val_loss, model)
+#         elif score < self.best_score:
+#             self.counter += 1
+#             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+#             if self.counter >= self.patience:
+#                 self.early_stop = True
+#         else:
+#             self.best_score = score
+#             self.save_checkpoint(val_loss, model)
+#             self.counter = 0
+#
+#     def save_checkpoint(self, val_loss, model):
+#         #Saves model when validation loss decrease
+#         if self.verbose:
+#             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+#             # print(f'Validation loss decreased ({self.best_score:.6f} --> {val_loss:.6f}).  Saving model ...')
+#         torch.save(model.state_dict(), "/home/liliana/models/NoNewNet/" + self.checkpoint_name)
+
+
+class Early_Stopping:
+
+    def __init__(self, patience = 3, verbose=False):
         self.patience = patience
         self.verbose = verbose
-        self.counter = 0
-        self.best_score = None
-        self.early_stop = False
         self.val_loss_min = np.Inf
-        self.checkpoint_name = checkpoint_model_name
+        self.counter = 0
+        self.early_stop = False
+        self.best_model = 0
 
     def __call__(self, val_loss, model):
 
-        score = -val_loss
+        # if self.val_loss_min is np.Inf:
+        #     self.val_loss_min = val_loss
+        #     self.best_model = save_checkpoint(val_loss, model)
 
-        if self.best_score is None:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-        elif score < self.best_score:
+        if val_loss >= self.val_loss_min:
             self.counter += 1
             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
+
         else:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.best_model= self.save_checkpoint(val_loss, model)
+            self.val_loss_min = val_loss
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model):
-        '''Saves model when validation loss decrease.'''
+        #Saves model when validation loss decrease
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), "/home/liliana/models/NoNewNetCfg/" + self.checkpoint_name)
+        self.best_model = copy.deepcopy(model.state_dict())

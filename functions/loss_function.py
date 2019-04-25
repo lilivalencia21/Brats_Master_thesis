@@ -1,14 +1,12 @@
 import torch
+import torch.nn as nn
+
 
 def to_categorical(target):
     """
     :param target: target image tensor [bs, 1, patch_size_x, patch_size_y, patch_size_z]
     :return: tensor [bs, num_labels, patch_size_x, patch_size_y, patch_size_z]
     """
-    # input
-    # target - tensor with size [bs, 1, patch_size_x, patch_size_y, patch_size_z]
-    # output
-    # target_cat - tensor with size [bs, num_classes, patch_size_x, patch_size_y, patch_size_z]
     target_channels = []
     for n in range(5):
         target_channels.append((target[:, : , ...] == n).float())
@@ -20,7 +18,7 @@ def cross_entropy_wrapper(pred, GT):
     """
     :param pred: model output
     :param GT: target patches
-    :return: crossentropy loss
+    :return: float - crossentropy loss
     """
     labels = GT.squeeze(1).long()
     loss = nn.CrossEntropyLoss()
@@ -28,10 +26,10 @@ def cross_entropy_wrapper(pred, GT):
 
 def dice_loss(output, target):
     target_tocat = to_categorical(target)   #convert tensor from [bs, 1,..] to [bs, 5, ...]
-    reduction_dim = (1, 2, 3)
+    reduction_dim = (2, 3, 4)
     den = torch.sum(output * target_tocat, dim=reduction_dim)
     num = torch.sum(output, dim=reduction_dim) + torch.sum(target_tocat, dim=reduction_dim)
 
-    loss = torch.mean((-2.0 / 5) * torch.sum((den/num), dim=1))
+    loss = torch.mean(1 - (2.0 / 5) * torch.sum((den/num), dim=1))
 
     return loss
