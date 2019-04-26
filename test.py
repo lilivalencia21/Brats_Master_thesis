@@ -27,12 +27,19 @@ crossval_optim_cfg = {'model': UNet3D(),
                        'path_to_save_segm': "/home/liliana/Results/crossval_optim/Fold_1/",
                        'path_to_save_txt': "/home/liliana/Results/crossval_optim/Fold_1/"+ 'fold_1.txt'}
 
+testing_crossentropy = {'model': UNet3D(),
+                       'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                       'model_path': "/home/liliana/models/CrossEntropyUnet3DModel/CrossEntropyUnet3D_from_5_to_9_fold_2.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_train_fold_2.txt",
+                       'path_to_save_segm':"/home/liliana/Results/CrossEntropyUnet3DResults/Fold2/",
+                       'path_to_save_txt': "/home/liliana/Results/CrossEntropyUnet3DResults/Fold2/" + 'fold_2.txt'}
+
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 
-test_cross_validation(dataset_test, crossval_optim_cfg)
+test_cross_validation(dataset_test, testing_crossentropy)
 
 
 

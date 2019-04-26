@@ -42,8 +42,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
 
             output = model(local_batch)
 
-            # loss = cross_entropy_wrapper(output, target)
-            loss = dice_loss(output, target)
+            loss = cross_entropy_wrapper(output, target)
+            # loss = dice_loss(output, target)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
@@ -72,8 +72,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
-                # loss = cross_entropy_wrapper(output, target)
-                loss = dice_loss(output, target)
+                loss = cross_entropy_wrapper(output, target)
+                # loss = dice_loss(output, target)
 
                 minibatches = i
                 valid_losses.append(loss.item())
@@ -112,7 +112,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
         stop = 0.0
 
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load("/home/liliana/models/NoNewNetCfg/"+model_name))
+    model.load_state_dict(torch.load("/home/liliana/models/CrossEntropyUnet3DModel/" + model_name))
 
     print('Finished Training')
 
@@ -148,17 +148,15 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         for case in val_set:
             val_cases.append(case['id'])
 
-        # file_train = open('cases_train fold_{}.txt'.format(i+1), 'w')
         # to change in future runnings to save in correct places
         trainStr = '\n'.join([str(elem) for elem in train_cases])
-        file_train = open('/home/liliana/dataToValidate/NoNewNetData/cases_train_fold_{}.txt'.format(i+1), 'w')
+        file_train = open('/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_train_fold_{}.txt'.format(i+1), 'w')
         file_train.write(trainStr)
         file_train.close()
 
-        # file_val = open('cases_val fold {}.txt'.format(i+1), 'w')
         #to change in future runnings to save in correct places
         valStr = '\n'.join([str(elem) for elem in val_cases])
-        file_val = open('/home/liliana/dataToValidate/NoNewNetData/cases_val_fold_{}.txt'.format(i+1), 'w')
+        file_val = open('/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_val_fold_{}.txt'.format(i+1), 'w')
         file_val.write(valStr)
         file_val.close()
 
@@ -185,7 +183,6 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         optimizer = optim.Adadelta(model.parameters())
         model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(experiment_cfg['model_name'], val_idx[0], val_idx[-1], fold+1 )
         print ('The name of the model to save is: {}'.format(model_name_fold))
-        # path_to_save_model = "/home/liliana/models/crossvalidation/"
         patience = experiment_cfg['patience']
         train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name_fold, patience)
 
@@ -227,10 +224,11 @@ class EarlyStopping:
         else:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
+            self.val_loss_min = val_loss
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), "/home/liliana/models/NoNewNetCfg/" + self.checkpoint_name)
+        torch.save(model.state_dict(), "/home/liliana/models/CrossEntropyUnet3DModel/" + self.checkpoint_name)
