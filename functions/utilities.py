@@ -25,6 +25,12 @@ def load_case(case_folder):
 
     case_dict['nifti_headers'] = list([img.header for img in data])
 
+    # case_dict['mean'] = [np.mean(img) for img in data].astype(np.float)
+    #
+    # case_dict['std_dev'] = [np.std(img) for img in data].astype(np.float)
+    #
+    # case_dict['norm'] = norm_array(data, case_dict['mean'],case_dict['std_dev'])
+
     case_dict['mean'] = np.stack(
         [np.mean(nib.load(modality_path).get_data()) for modality_path in case_dict['image_paths']], axis=0).astype(
         np.float)
@@ -60,8 +66,13 @@ def load_dataset(data_dir_train):
     return dataset
 
 
-def load_images(paths):
+def load_images(paths, GT=False):
+
     images = np.stack([nib.load(modality_path).get_data() for modality_path in paths])
+
+    if GT :
+        images[images == 4] = 3
+
     return images
 
 
@@ -145,8 +156,12 @@ def test_cross_validation(dataset, crossvalidation_cfg):
 
         testing_np = testing.cpu().detach().numpy()
 
-
         results = np.argmax(testing_np, axis=1)
+
+        if np.any(results == 3):
+            print('Detected 3')
+            results[results == 3] = 4
+
         segmentation_result = np.squeeze(results, axis=0)
 
         gt = load_images(test_case['gt_path'])
@@ -181,3 +196,19 @@ def nic_binary_accuracy(y_pred, y_true, class_dim=1):
     y_true = torch.squeeze(y_true.long(), dim=class_dim)
     y_pred_categorical = torch.argmax(y_pred, dim=class_dim)
     return torch.mean(torch.eq(y_true, y_pred_categorical).float())
+
+import sys
+
+
+def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 25, fill = '='):
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+
+    bar = fill * filledLength + '>' * min(length - filledLength, 1) + '.' * (length - filledLength - 1)
+
+    print('\r{} [{}] {}% {}'.format(prefix, bar, percent, suffix), end='\r')
+    sys.stdout.flush()
+
+    # Print New Line on Complete
+    if iteration == total:
+        print(' ')

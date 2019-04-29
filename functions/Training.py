@@ -7,6 +7,7 @@ import torch.optim as optim
 from functions.instructions import *
 from functions.nets import *
 from functions.loss_function import *
+from functions.utilities import *
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name, patience=3):
@@ -42,8 +43,13 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
 
             output = model(local_batch)
 
-            loss = cross_entropy_wrapper(output, target)
-            # loss = dice_loss(output, target)
+            # loss = cross_entropy_wrapper(output, target)
+            if minibatches == 100:
+                loss = dice_loss(output, target, breakPoint=True)
+
+            loss = dice_loss(output, target)
+
+
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
@@ -52,11 +58,20 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
             train_accuracies.append(accuracy)
             running_accuracy += accuracy.item()
 
+            suff = 'loss +++ ' + 'Training: {0:.5f}'.format(running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(running_accuracy / (minibatches + 1))
+            printProgressBar(minibatches, len(train_gen), suffix=suff)
+
+        printProgressBar(len(train_gen), len(train_gen) )
 
         # print statistics
         print('epoch={}'.format(epoch+1) + '-' * 10,
               'loss', 'Training: {0:.5f}'.format(running_loss / (minibatches+1)),
               'Accuracy: {0:.5f}'.format(running_accuracy / (minibatches+1)))
+        # iteration = 0
+        # if minibatches % 10 == 9:
+        #     iteration = minibatches + iteration
+        #     printProgressBar(iteration, minibatches)
+
 
         running_loss = 0.0
         minibatches = 0.0
@@ -72,8 +87,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
-                loss = cross_entropy_wrapper(output, target)
-                # loss = dice_loss(output, target)
+                # loss = cross_entropy_wrapper(output, target)
+                loss = dice_loss(output, target)
 
                 minibatches = i
                 valid_losses.append(loss.item())
@@ -112,7 +127,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
         stop = 0.0
 
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load("/home/liliana/models/CrossEntropyUnet3DModel/" + model_name))
+    model.load_state_dict(torch.load("/home/liliana/models/DiceLossUNet3D_Model/" + model_name))
 
     print('Finished Training')
 
@@ -150,13 +165,13 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
 
         # to change in future runnings to save in correct places
         trainStr = '\n'.join([str(elem) for elem in train_cases])
-        file_train = open('/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_train_fold_{}.txt'.format(i+1), 'w')
+        file_train = open(experiment_cfg['pathToCasesNames']+'cases_train_fold_{}.txt'.format(i+1), 'w')
         file_train.write(trainStr)
         file_train.close()
 
         #to change in future runnings to save in correct places
         valStr = '\n'.join([str(elem) for elem in val_cases])
-        file_val = open('/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_val_fold_{}.txt'.format(i+1), 'w')
+        file_val = open(experiment_cfg['pathToCasesNames']+ 'cases_val_fold_{}.txt'.format(i+1), 'w')
         file_val.write(valStr)
         file_val.close()
 
@@ -231,4 +246,4 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), "/home/liliana/models/CrossEntropyUnet3DModel/" + self.checkpoint_name)
+        torch.save(model.state_dict(), "/home/liliana/models/DiceLossUNet3D_Model/" + self.checkpoint_name)

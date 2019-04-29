@@ -5,6 +5,7 @@ from functions.utilities import *
 from functions.instructions import *
 from functions.patches import *
 from functions.nets import *
+from functions.testing_functions import *
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # model = UNet3D()
@@ -29,17 +30,25 @@ crossval_optim_cfg = {'model': UNet3D(),
 
 testing_crossentropy = {'model': UNet3D(),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-                       'model_path': "/home/liliana/models/CrossEntropyUnet3DModel/CrossEntropyUnet3D_from_5_to_9_fold_2.pt",
-                       'training_set_txt':"/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_train_fold_2.txt",
-                       'path_to_save_segm':"/home/liliana/Results/CrossEntropyUnet3DResults/Fold2/",
-                       'path_to_save_txt': "/home/liliana/Results/CrossEntropyUnet3DResults/Fold2/" + 'fold_2.txt'}
+                       'model_path': "/home/liliana/models/CrossEntropyUnet3DModel/CrossEntropyUnet3D_from_15_to_19_fold_4.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/CrossEntropyUnet3D_data/cases_train_fold_4.txt",
+                       'path_to_save_segm':"/home/liliana/Results/CrossEntropyUnet3DResults/Fold4/",
+                       'path_to_save_txt': "/home/liliana/Results/CrossEntropyUnet3DResults/Fold4/" + 'fold_4.txt'}
+
+testing_diceLoss = {'model': UNet3D(),
+                       'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                       'model_path': "/home/liliana/models/DiceLossUNet3D_Model/DiceLossUnet3D_from_0_to_4_fold_1.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/DiceLossUNet3D_Data/cases_train_fold_1.txt",
+                       'path_to_save_segm':"/home/liliana/Results/DiceLossUNet3DResults/Fold1/",
+                       'path_to_save_txt': "/home/liliana/Results/DiceLossUNet3DResults/Fold1/" + 'fold_1.txt'}
 
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 
-test_cross_validation(dataset_test, testing_crossentropy)
+test_cross_validation(dataset_test, testing_diceLoss)
+# segment_img()
 
 
 

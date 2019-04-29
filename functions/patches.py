@@ -58,7 +58,11 @@ def extract_patch(instruction, dataset):
     volume_gt = case_dict['gt']
 
     # apply slice to volume
+    #28-04-19 let's try to copy to see if the error is there
     X_patch = volume_images[instruction['data_slice']]
     y_patch = volume_gt[instruction['data_slice']]
+    # X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
+    # y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
+
 
     return X_patch, y_patch

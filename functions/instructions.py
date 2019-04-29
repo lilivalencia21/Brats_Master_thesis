@@ -25,17 +25,37 @@ class UniformSampler(Sampler):
 
 
 class BalancedSampler(Sampler):
-    def __init__(self, patch_shape):
+    def __init__(self, patch_shape,num_classes, num_elements=None):
         self.patch_shape = patch_shape
+        self.num_classes = num_classes
+        self.num_elements = num_elements
+
 
     def get_centers(self, case):
-        vol_shape = case['nifti_headers'][0]['dim'][1:4]
+
+        gt = load_images(case['gt_path'], GT=True).squeeze(0)
 
         # Get class 0 centers
-        pass
+        all_centers = []
+        for label in range(1,self.num_classes+1):
+            class_centers = self.sample_class_centers(gt, label)
 
+            index_centers = np.asarray(np.random.permutation(len(class_centers))[:self.num_elements], dtype=np.int)
+            for idx in index_centers:
+                all_centers.append(class_centers[idx])
+
+        return all_centers
+
+
+    def sample_class_centers(self, gt, class_label):
+        centers_taple = np.where(gt == class_label)
+
+        # Put in ndarray format
         centers = []
-        return centers # Must return a list, where each element is a list of 3 floats
+        for i in range(len(centers_taple[0])):
+            centers.append([centers_taple[0][i], centers_taple[1][i], centers_taple[2][i]])
+
+        return centers
 
 
 def generate_instruction(dataset, sampler, patch_shape):
@@ -67,7 +87,7 @@ class BratsDatasetLoader(Dataset):  # Inheritance
             self.dataset[case_idx]['norm_images']=norm_array(self.dataset[case_idx]['images'],self.dataset[case_idx]['mean'],
                                                              self.dataset[case_idx]['std_dev'])
 
-            self.dataset[case_idx]['gt'] = load_images(self.dataset[case_idx]['gt_path'])
+            self.dataset[case_idx]['gt'] = load_images(self.dataset[case_idx]['gt_path'], GT=True)
 
         self.instructions = instructions
 

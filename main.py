@@ -36,12 +36,13 @@ params_nnn = {'batch_size':128,
 #
 experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
                'step' :  (12, 12, 12),
-               'sampler' : UniformSampler,
+               'sampler' : BalancedSampler,
                'epochs': 10,
-               'model_name': 'CrossEntropyUnet3D',
-                'patience': 3}
+               'model_name': 'DiceLossUnet3D',
+                'patience': 3,
+                'pathToCasesNames':"/home/liliana/dataToValidate/DiceLossUNet3D_Data/"}
 
-experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'], num_elements=None)})
+experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=500)})
 
 
 cross_validation(dataset, params_nnn, experiment_nnn_cfg)
