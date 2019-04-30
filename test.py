@@ -47,56 +47,27 @@ testing_folder = {'model': UNet3D(),
                        'model_path': "/home/liliana/models/testfolder_Model/testChanges_from_0_to_4_fold_1.pt",
                        'training_set_txt':"/home/liliana/dataToValidate/testfolder_Data/cases_train_fold_1.txt",
                        'path_to_save_segm':"/home/liliana/Results/testfolderResults/Fold1/",
-                       'path_to_save_txt': "/home/liliana/Results/testfolderResults/Fold1/" + 'fold_1.txt'}
+                       'path_to_save_metrics': "/home/liliana/Results/testfolderResults/Fold1/"}
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
+# test_cross_validation(dataset_test, testing_folder)
+cases_to_validate = "/home/liliana/dataToValidate/testfolder_Data/cases_val_fold_1.txt"
+with open(cases_to_validate) as f:
+    validation_set = [line.rstrip('\n') for line in f]
 
-test_cross_validation(dataset_test, testing_folder)
-# segment_img()
-
-
-
-# # data_dir_test = os.path.expanduser("~/Desktop/Liliana/Data/valid")
-# data_dir_test = "/home/liliana/Data/valid/"
-# dataset_test = load_dataset(data_dir_test)
-# gt = load_images(dataset_test[0]['gt_path'])
-#
-# nifti_image = nib.load(dataset_test[0]['image_paths'][0])
-# original_image = load_images(dataset_test[0]['image_paths']).astype(np.float)
-# mean = dataset_test[0]['mean']
-# std_dev = dataset_test[0]['std_dev']
-# input_image = np.stack([norm(image, mean, std) for image, mean, std in zip(original_image, mean, std_dev)])
-#
-#
-# img = np.expand_dims(input_image, axis=0)
-# test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
-#
-# with torch.no_grad():
-#     testing = model(test_input)
-#
-# testing_np = testing.cpu().detach().numpy()
-#
-# # nclasses = 5
-# results = np.argmax(testing_np, axis=1)
-# result_prob = np.squeeze(results, axis=0)
-#
-#
-# dice = dice_multiclass(gt, result_prob)
-# print(dice)
-
-#Save Results
-# result_img = nib.Nifti1Image(result_prob, nifti_image.affine, nifti_image.header)
-# image_filepath = os.path.join("/home/liliana/Results/Batch12/", 'test.nii.gz')
-# print("Saving {}...".format('test.nii.gz'))
-# nib.save(result_img, image_filepath )
+dices_file = open(testing_folder['path_to_save_metrics'] + 'dice.txt', 'w')
+hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
 
 
-# result_probs = [result_prob]
-# for i, prob in enumerate(result_probs):
-#     for j in range(nclasses):
-#         result_img = nib.Nifti1Image(prob[j], nifti_image.affine, nifti_image.header)
-#         image_filepath = os.path.join("/home/liliana/Results/Batch12/", 'test{}_class{}.nii.gz'.format(i, j))
-#         print("Saving {}...".format('test{}_class{}.nii.gz'.format(i, j)))
-#         nib.save(result_img, image_filepath )
+for case_name in validation_set:
+    case_data = get_by_name(dataset_test, case_name)
+    dice, hd = segment_img(case_data, testing_folder)
+    dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
+    hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
+
+print('Saving metrics..........')
+dices_file.close()
+hausdorff_file.close()
+

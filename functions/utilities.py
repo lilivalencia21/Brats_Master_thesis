@@ -69,7 +69,7 @@ def load_images(paths, GT=False):
 
 def get_by_name(dataset, name):
     for case in dataset:
-        if case['id'] is name:
+        if case['id'] == name:
             return case
 
 def norm_array(images, mean, std):
@@ -154,6 +154,7 @@ def load_validation_cases(dataset, training_set_txt):
             validation_set.append(case)
 
     return validation_set
+
 
 #Albert's function
 def nic_binary_accuracy(y_pred, y_true, class_dim=1):
