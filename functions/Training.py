@@ -10,7 +10,7 @@ from functions.loss_function import *
 from functions.utilities import *
 
 
-def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name, patience=3):
+def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name, model_path, patience=3):
     print('Training started')
 
     patience = patience
@@ -23,7 +23,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
     valid_accuracies = []
 
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(model_name, patience=patience, verbose=True)
+    early_stopping = EarlyStopping(model_name, model_path, patience=patience, verbose=True)
 
     for epoch in range(max_epochs):
 
@@ -37,19 +37,10 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
             # print('minbatch:{}'.format(minibatches), sep='\r')
 
             local_batch, target = local_batch.to(device), local_labels.to(device)
-
             # forward + backward + optimize
             optimizer.zero_grad()
-
             output = model(local_batch)
-
-            # loss = cross_entropy_wrapper(output, target)
-            if minibatches == 100:
-                loss = dice_loss(output, target, breakPoint=True)
-
-            loss = dice_loss(output, target)
-
-
+            loss = loss_function(output, target)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
@@ -58,20 +49,12 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
             train_accuracies.append(accuracy)
             running_accuracy += accuracy.item()
 
-            suff = 'loss +++ ' + 'Training: {0:.5f}'.format(running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(running_accuracy / (minibatches + 1))
-            printProgressBar(minibatches, len(train_gen), suffix=suff)
+            pref = 'Epoch={}'.format(epoch + 1)
+            suff = 'loss --- ' + 'Training: {0:.5f}'.format(
+                running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(running_accuracy / (minibatches + 1))
+            printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
 
         printProgressBar(len(train_gen), len(train_gen) )
-
-        # print statistics
-        print('epoch={}'.format(epoch+1) + '-' * 10,
-              'loss', 'Training: {0:.5f}'.format(running_loss / (minibatches+1)),
-              'Accuracy: {0:.5f}'.format(running_accuracy / (minibatches+1)))
-        # iteration = 0
-        # if minibatches % 10 == 9:
-        #     iteration = minibatches + iteration
-        #     printProgressBar(iteration, minibatches)
-
 
         running_loss = 0.0
         minibatches = 0.0
@@ -87,9 +70,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
-                # loss = cross_entropy_wrapper(output, target)
-                loss = dice_loss(output, target)
-
+                loss = loss_function(output, target)
                 minibatches = i
                 valid_losses.append(loss.item())
                 running_loss += loss.item()
@@ -99,10 +80,13 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
                 valid_accuracies.append(accuracy)
                 running_accuracy += accuracy.item()
 
-        # print statistics
-        print('epoch={}'.format(epoch+1) + '-' * 10,
-              'loss', 'Validation: {0:.5f}'.format(running_loss / (minibatches+1)),
-              'Accuracy: {}'.format(running_accuracy / (minibatches+1)))
+                suff = 'loss --- ' + 'Validation: {0:.5f}'.format(
+                    running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(
+                    running_accuracy / (minibatches + 1))
+                pref = 'Epoch={}'.format(epoch+1)
+                printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
+
+            printProgressBar(len(train_gen), len(train_gen))
 
         running_loss = 0.0
         running_accuracy = 0.0
@@ -115,7 +99,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
 
         # early_stopping needs the validation loss to check if it has decresed,
         # and if it has, it will make a checkpoint of the current model
-        early_stopping(valid_loss, model)
+        early_stopping(valid_loss, model, model_path)
 
         if early_stopping.early_stop:
             print("Early stopping")
@@ -127,7 +111,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_na
         stop = 0.0
 
     # load the last checkpoint with the best model
-    model.load_state_dict(torch.load("/home/liliana/models/DiceLossUNet3D_Model/" + model_name))
+    model.load_state_dict(torch.load(model_path + model_name))
 
     print('Finished Training')
 
@@ -196,10 +180,12 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
 
         max_epochs = experiment_cfg['epochs']
         optimizer = optim.Adadelta(model.parameters())
+        loss_function = experiment_cfg['loss_function']
         model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(experiment_cfg['model_name'], val_idx[0], val_idx[-1], fold+1 )
         print ('The name of the model to save is: {}'.format(model_name_fold))
+        model_path = experiment_cfg['pathToSaveModel']
         patience = experiment_cfg['patience']
-        train_net(train_gen, val_gen, model, max_epochs, optimizer, device, model_name_fold, patience)
+        train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name_fold, model_path, patience)
 
 
     stop = time.time()
@@ -208,7 +194,7 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, checkpoint_model_name, patience=3, verbose=False ):
+    def __init__(self, checkpoint_model_name, model_path, patience=3, verbose=False ):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -224,13 +210,13 @@ class EarlyStopping:
         self.val_loss_min = np.Inf
         self.checkpoint_name = checkpoint_model_name
 
-    def __call__(self, val_loss, model):
+    def __call__(self, val_loss, model, model_path):
 
         score = -val_loss
 
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.save_checkpoint(val_loss, model, model_path)
         elif score < self.best_score:
             self.counter += 1
             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
@@ -238,12 +224,12 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.save_checkpoint(val_loss, model, model_path)
             self.val_loss_min = val_loss
             self.counter = 0
 
-    def save_checkpoint(self, val_loss, model):
+    def save_checkpoint(self, val_loss, model, model_path):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), "/home/liliana/models/DiceLossUNet3D_Model/" + self.checkpoint_name)
+        torch.save(model.state_dict(), model_path + self.checkpoint_name)

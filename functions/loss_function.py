@@ -25,8 +25,6 @@ def cross_entropy_wrapper(pred, GT):
     return loss(torch.log(torch.clamp(pred, 1E-7, 1.0)), labels)
 
 def dice_loss(output, target, smooth=0.0001, breakPoint=False):
-    if breakPoint:
-        print('hola')
     target_tocat = to_categorical(target)   #convert tensor from [bs, 1,..] to [bs, 5, ...]
     reduction_dim = (2, 3, 4)
     den = torch.sum(output * target_tocat, dim=reduction_dim) + smooth

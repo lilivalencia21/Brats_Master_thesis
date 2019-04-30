@@ -6,6 +6,7 @@ from functions.patches import *
 import torch
 from functions.nets import *
 from functions.Training import *
+from functions.loss_function import *
 
 
 data_dir_train = "/home/liliana/Data/train"
@@ -38,9 +39,11 @@ experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
                'step' :  (12, 12, 12),
                'sampler' : BalancedSampler,
                'epochs': 10,
-               'model_name': 'DiceLossUnet3D',
-                'patience': 3,
-                'pathToCasesNames':"/home/liliana/dataToValidate/DiceLossUNet3D_Data/"}
+               'model_name': 'testChanges',
+               'patience': 3,
+               'pathToCasesNames':"/home/liliana/dataToValidate/testfolder_Data/",
+               'pathToSaveModel': "/home/liliana/models/testfolder_Model/",
+               'loss_function': dice_loss}
 
 experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=500)})
 

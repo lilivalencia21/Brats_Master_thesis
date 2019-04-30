@@ -25,19 +25,9 @@ def load_case(case_folder):
 
     case_dict['nifti_headers'] = list([img.header for img in data])
 
-    # case_dict['mean'] = [np.mean(img) for img in data].astype(np.float)
-    #
-    # case_dict['std_dev'] = [np.std(img) for img in data].astype(np.float)
-    #
-    # case_dict['norm'] = norm_array(data, case_dict['mean'],case_dict['std_dev'])
+    case_dict['mean'] = np.stack([np.mean(img.get_data()) for img in data], axis=0).astype(np.float)
 
-    case_dict['mean'] = np.stack(
-        [np.mean(nib.load(modality_path).get_data()) for modality_path in case_dict['image_paths']], axis=0).astype(
-        np.float)
-
-    case_dict['std_dev'] = np.stack(
-        [np.std(nib.load(modality_path).get_data()) for modality_path in case_dict['image_paths']], axis=0).astype(
-        np.float)
+    case_dict['std_dev'] = np.stack([np.std(img.get_data()) for img in data], axis=0).astype(np.float)
 
     return case_dict
 
