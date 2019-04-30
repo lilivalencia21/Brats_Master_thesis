@@ -1,5 +1,8 @@
 import torch.nn as nn
 import torch
+import os
+import nibabel as nib
+import numpy as np
 from functions.utilities import *
 
 
@@ -43,5 +46,26 @@ def segment_img(image_case, testing_cfg):
     save_segmentation_img(segmentation_result, nifti_image, testing_cfg['path_to_save_segm'],segm_name)
 
     return dice, hausdorff
+
+def load_validation_cases(dataset, training_set_txt):
+
+    training_set = []
+    with open(training_set_txt) as f:
+        training_set = [line.rstrip('\n') for line in f]
+
+    validation_set = []
+    for case in dataset:
+        if case['id'] not in training_set:
+            validation_set.append(case)
+
+    return validation_set
+
+def save_segmentation_img(img_segm, original_img, path_to_save, segmentation_name):
+    result_img = nib.Nifti1Image(img_segm, original_img.affine, original_img.header)
+    image_filepath = os.path.join(path_to_save, segmentation_name)
+    print("Saving {}...".format(segmentation_name))
+    nib.save(result_img, image_filepath )
+
+    print('Segmented image saved')
 
 

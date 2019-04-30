@@ -50,7 +50,7 @@ def get_centers_unif(vol_shape, patch_shape, unif_step):
 
 def extract_patch(instruction, dataset):
     # get case_dict with 'id'
-    case_dict = get_by_name(dataset, instruction['id'])
+    case_dict = get_by_id(dataset, instruction['id'])
 
     # get volume
     volume_images = case_dict['norm_images']

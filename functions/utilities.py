@@ -67,7 +67,7 @@ def load_images(paths, GT=False):
     return images
 
 
-def get_by_name(dataset, name):
+def get_by_id(dataset, name):
     for case in dataset:
         if case['id'] == name:
             return case
@@ -84,76 +84,6 @@ def norm_array(images, mean, std):
     for mod_idx, (m, s) in enumerate(zip(mean, std)):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
-
-def save_segmentation_img(img_segm, original_img, path_to_save, segmentation_name):
-    result_img = nib.Nifti1Image(img_segm, original_img.affine, original_img.header)
-    image_filepath = os.path.join(path_to_save, segmentation_name)
-    print("Saving {}...".format(segmentation_name))
-    nib.save(result_img, image_filepath )
-
-    print('Segmented image saved')
-
-
-def test_cross_validation(dataset, crossvalidation_cfg):
-
-    model = crossvalidation_cfg['model']
-    model.load_state_dict(torch.load(crossvalidation_cfg['model_path']))
-    model.to(crossvalidation_cfg['device'])
-    model.eval()
-    device = crossvalidation_cfg['device']
-
-    validation_set = load_validation_cases(dataset, crossvalidation_cfg['training_set_txt'])
-    dices_file = open(crossvalidation_cfg['path_to_save_txt'], 'w')
-
-    for test_case in validation_set:
-        nifti_image = nib.load(test_case['image_paths'][0])
-        # intensity_images = load_images(test_case['image_paths']).astype(np.float)
-        intensity_images = load_images(test_case['image_paths'])
-        mean = test_case['mean']
-        std_dev = test_case['std_dev']
-        # input_images = np.stack([norm(image, mean, std) for image, mean, std in zip(intensity_images, mean, std_dev)])
-        input_images = norm_array(intensity_images, mean, std_dev)
-
-        img = np.expand_dims(input_images, axis=0)
-        test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
-
-        with torch.no_grad():
-            testing = model(test_input)
-
-        testing_np = testing.cpu().detach().numpy()
-
-        results = np.argmax(testing_np, axis=1)
-
-        if np.any(results == 3):
-            results[results == 3] = 4
-
-        segmentation_result = np.squeeze(results, axis=0)
-
-        gt = load_images(test_case['gt_path'])
-        dice = dice_multiclass(gt, segmentation_result)
-        hausdorff = compute_multiclass_metrics(gt, segmentation_result)
-        print('Dice for case {} is {}'.format(test_case['id'], dice))
-        print('Hausdorff for case {} is {}'.format(test_case['id'], hausdorff))
-        dices_file.write('{} \n {} \n'.format(test_case['id'], str(dice)))
-        segm_name = '{}_seg.nii.gz'.format(test_case['id'])
-        print('Saving image segmentation result as {}'.format(segm_name))
-        save_segmentation_img(segmentation_result, nifti_image, crossvalidation_cfg['path_to_save_segm'],segm_name)
-
-    print('Saving dice scores..........')
-    dices_file.close()
-
-def load_validation_cases(dataset, training_set_txt):
-
-    training_set = []
-    with open(training_set_txt) as f:
-        training_set = [line.rstrip('\n') for line in f]
-
-    validation_set = []
-    for case in dataset:
-        if case['id'] not in training_set:
-            validation_set.append(case)
-
-    return validation_set
 
 
 #Albert's function

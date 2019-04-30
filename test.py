@@ -56,7 +56,7 @@ hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 
 
 
 for case_name in validation_set:
-    case_data = get_by_name(dataset_test, case_name)
+    case_data = get_by_id(dataset_test, case_name)
     dice, hd = segment_img(case_data, testing_folder)
     dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
     hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
