@@ -7,12 +7,6 @@ from functions.patches import *
 from functions.nets import *
 from functions.testing_functions import *
 
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# model = UNet3D()
-# model.load_state_dict(torch.load("/home/liliana/models/net_norm_overlap.pth"))
-# model.to(device)
-# model.eval()
-
 #To use with test_cross_validation function.
 crossvalidation_cfg = {'model': UNet3D(),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),

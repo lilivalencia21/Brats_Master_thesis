@@ -32,8 +32,9 @@ def segment_img(image_case, testing_cfg):
     segmentation_result = np.squeeze(results, axis=0)
 
     gt = load_images(image_case['gt_path'])
-    dice = dice_multiclass(gt, segmentation_result)
-    hausdorff = compute_multiclass_metrics(gt, segmentation_result)
+    # dice = dice_multiclass(gt, segmentation_result)
+
+    dice , hausdorff = compute_multiclass_metrics(gt, segmentation_result)
     print('Dice for case {} is {}'.format(image_case['id'], dice))
     print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
 

@@ -6,7 +6,6 @@ import cv2
 
 
 def get_patch_slices(centers, patch_shape, step=None):
-    #     assert len(patch_shape) == centers.shape[1] == 3
 
     ### Compute patch sides for slicing
     half_sizes = [[dim // 2, dim // 2] for dim in patch_shape]
@@ -16,7 +15,7 @@ def get_patch_slices(centers, patch_shape, step=None):
     # Actually create slices
     patch_locations = []
     for count, center in enumerate(centers):
-        patch_slice = (slice(None),  # slice(None) selects all modalities
+        patcgit ah_slice = (slice(None),  # slice(None) selects all modalities
                        slice(center[0] - half_sizes[0][0], center[0] + half_sizes[0][1] + 1, step),
                        slice(center[1] - half_sizes[1][0], center[1] + half_sizes[1][1] + 1, step),
                        slice(center[2] - half_sizes[2][0], center[2] + half_sizes[2][1] + 1, step))
@@ -56,13 +55,7 @@ def extract_patch(instruction, dataset):
     # get volume
     volume_images = case_dict['norm_images']
     volume_gt = case_dict['gt']
-
     # apply slice to volume
-    #28-04-19 let's try to copy to see if the error is there
     X_patch = volume_images[instruction['data_slice']]
     y_patch = volume_gt[instruction['data_slice']]
-    # X_patch = copy.deepcopy(volume_images[instruction['data_slice']])
-    # y_patch = copy.deepcopy(volume_gt[instruction['data_slice']])
-
-
     return X_patch, y_patch
