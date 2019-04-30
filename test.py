@@ -42,12 +42,18 @@ testing_diceLoss = {'model': UNet3D(),
                        'path_to_save_segm':"/home/liliana/Results/DiceLossUNet3DResults/Fold1/",
                        'path_to_save_txt': "/home/liliana/Results/DiceLossUNet3DResults/Fold1/" + 'fold_1.txt'}
 
+testing_folder = {'model': UNet3D(),
+                       'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                       'model_path': "/home/liliana/models/testfolder_Model/testChanges_from_0_to_4_fold_1.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/testfolder_Data/cases_train_fold_1.txt",
+                       'path_to_save_segm':"/home/liliana/Results/testfolderResults/Fold1/",
+                       'path_to_save_txt': "/home/liliana/Results/testfolderResults/Fold1/" + 'fold_1.txt'}
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 
-test_cross_validation(dataset_test, testing_diceLoss)
+test_cross_validation(dataset_test, testing_folder)
 # segment_img()
 
 

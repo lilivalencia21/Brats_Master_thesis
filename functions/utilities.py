@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch
 import operator
 import random
+from functions.metrics_brats import *
 
 
 def load_case(case_folder):
@@ -84,31 +85,6 @@ def norm_array(images, mean, std):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
 
-def dice_coef(y_true, y_pred):
-    intersection = np.sum(np.logical_and(y_true, y_pred))
-
-    if intersection > 0:
-        return (2.0 * intersection) / (np.sum(y_true>0) + np.sum(y_pred>0))
-    else:
-        return 0.0
-
-def dice_multiclass(y_true, y_pred):
-    """
-    :param y_true: ground thruth segmentation [1,240, 240, 240]
-    :param y_pred: Segmentation prediction after argmax and squeeze [1,240, 240, 240]
-    :return: float, dice score
-    """
-    y = y_pred.copy()
-    nclasses = np.unique(y_true)
-    dice = []
-    for c in nclasses:
-        # y[y!=c] = 0
-        seg = y == c
-        gt = y_true == c
-        dice_class = dice_coef(gt, seg)
-        dice.append(dice_class)
-    return dice
-
 def save_segmentation_img(img_segm, original_img, path_to_save, segmentation_name):
     result_img = nib.Nifti1Image(img_segm, original_img.affine, original_img.header)
     image_filepath = os.path.join(path_to_save, segmentation_name)
@@ -149,14 +125,15 @@ def test_cross_validation(dataset, crossvalidation_cfg):
         results = np.argmax(testing_np, axis=1)
 
         if np.any(results == 3):
-            print('Detected 3')
             results[results == 3] = 4
 
         segmentation_result = np.squeeze(results, axis=0)
 
         gt = load_images(test_case['gt_path'])
         dice = dice_multiclass(gt, segmentation_result)
+        hausdorff = compute_multiclass_metrics(gt, segmentation_result)
         print('Dice for case {} is {}'.format(test_case['id'], dice))
+        print('Hausdorff for case {} is {}'.format(test_case['id'], hausdorff))
         dices_file.write('{} \n {} \n'.format(test_case['id'], str(dice)))
         segm_name = '{}_seg.nii.gz'.format(test_case['id'])
         print('Saving image segmentation result as {}'.format(segm_name))

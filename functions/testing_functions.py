@@ -23,11 +23,10 @@ def segment_img(image_case, testing_cfg):
         testing = model(test_input)
 
     testing_np = testing.cpu().detach().numpy()
-
-    if testing_np[testing_np == 3]:
-        testing_np[testing_np == 3] = 4
-
     results = np.argmax(testing_np, axis=1)
+
+    if results[testing_np == 3]:
+        results[testing_np == 3] = 4
 
     segmentation_result = np.squeeze(results, axis=0)
 
