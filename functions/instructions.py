@@ -107,7 +107,6 @@ class BratsDatasetLoader(Dataset):  # Inheritance
         instruction = self.instructions[index]
         X, y = extract_patch(instruction, self.dataset)
         y = torch.Tensor(y).byte()
-        print(X.shape)
         X = torch.Tensor(X).float()
 
         return X, y

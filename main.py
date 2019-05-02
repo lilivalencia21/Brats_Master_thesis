@@ -38,7 +38,7 @@ experiment_cfg.update({'sampler' : BalancedSampler(experiment_cfg['patch_shape']
 
 #Testing No New-net configuration
 
-params_nnn = {'batch_size':32,
+params_nnn = {'batch_size':2,
               'shuffle': True,
               'num_workers': 64}
 #
