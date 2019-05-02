@@ -41,7 +41,7 @@ def segment_img(image_case, testing_cfg):
     print('Dice for case {} is {}'.format(image_case['id'], dice))
     print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
 
-    segm_name = '{}_1.nii.gz'.format(image_case['id'])
+    segm_name = '{}.nii.gz'.format(image_case['id'])
     print('Saving image segmentation result as {}'.format(segm_name))
     save_segmentation_img(segmentation_result, nifti_image, testing_cfg['path_to_save_segm'],segm_name)
 

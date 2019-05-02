@@ -70,6 +70,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
                 # forward + backward + optimize
                 output = model(local_batch)
                 target = local_labels
+
                 loss = loss_function(output, target)
                 minibatches = i
                 valid_losses.append(loss.item())
@@ -174,8 +175,7 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         print("Generated {} validation instructions from {} images".format(len(instructions_val), len(val_set)))
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = UNet3D()
-        # model = UNet3DNNN()
+        model = experiment_cfg['model']
         model.to(device)
 
         max_epochs = experiment_cfg['epochs']

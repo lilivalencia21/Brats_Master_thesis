@@ -3,6 +3,7 @@ import time
 from torch.utils.data import Dataset
 from functions.patches import *
 import torch
+import copy
 
 from abc import ABC, abstractmethod
 
@@ -105,8 +106,8 @@ class BratsDatasetLoader(Dataset):  # Inheritance
 
         instruction = self.instructions[index]
         X, y = extract_patch(instruction, self.dataset)
-
         y = torch.Tensor(y).byte()
+        print(X.shape)
         X = torch.Tensor(X).float()
 
         return X, y

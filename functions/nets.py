@@ -61,12 +61,15 @@ class UNet3DNNN(nn.Module):
         block5 = F.max_pool3d(F.leaky_relu(self.down5(block4)), (2, 2, 2))
 
         block6 = F.upsample(F.leaky_relu(self.up1(block5)), size=(2, 2, 2), mode='trilinear')
-
         block7 = F.upsample(F.leaky_relu(self.up2(block6)), size=(2, 2, 2), mode='trilinear')
-        block8 = F.upsample(F.leaky_relu(self.up3(block7)), size=(2, 2, 2), mode='trilinear')
-        block9 = F.upsample(F.leaky_relu(self.up4(block8)), size=(2, 2, 2), mode='trilinear')
-        block10 = F.leaky_relu(self.up5(block9))
+        skipcon1 = torch.cat(block4, block7)
+        block8 = F.upsample(F.leaky_relu(self.up3(skipcon1)), size=(2, 2, 2), mode='trilinear')
+        skipcon2 = torch.cat(block3, block8)
+        block9 = F.upsample(F.leaky_relu(self.up4(skipcon2)), size=(2, 2, 2), mode='trilinear')
+        skipcon3 = torch.cat(block2, block9)
+        block10 = F.leaky_relu(self.up5(skipcon3))
+        skipcon4 = torch.cat(block1, block10)
 
-        x_out = F.softmax(block10, dim=1)
+        x_out = F.softmax(skipcon4, dim=1)
 
         return x_out
