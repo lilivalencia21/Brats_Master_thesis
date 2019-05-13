@@ -36,7 +36,7 @@ testing_diceLoss = {'model': UNet3D(),
                        'path_to_save_segm':"/home/liliana/Results/DiceLossUNet3DResults/Fold1/",
                        'path_to_save_txt': "/home/liliana/Results/DiceLossUNet3DResults/Fold1/" + 'fold_1.txt'}
 
-testing_folder = {'model': UNet3DNNN(),
+testing_folder = {'model': UNet3D(),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
                        'model_path': "/home/liliana/models/testfolder_Model/testChanges_from_0_to_4_fold_1.pt",
                        'training_set_txt':"/home/liliana/dataToValidate/testfolder_Data/cases_train_fold_1.txt",
@@ -58,6 +58,7 @@ hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 
 for case_name in validation_set:
     case_data = get_by_id(dataset_test, case_name)
     dice, hd = segment_img(case_data, testing_folder)
+    # segment_img(case_data, testing_folder)
     dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
     hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
 

@@ -20,7 +20,7 @@ def compute_multiclass_metrics(y_true, y_pred):
         hausdorff = hausdorff_dist(gt, seg)
         hausdorff_distance.append(hausdorff)
 
-    return dice, hausdorff_distance
+    return dice, hausdorff
 
 def dice_coef(y_true, y_pred):
     intersection = np.sum(np.logical_and(y_true, y_pred))
