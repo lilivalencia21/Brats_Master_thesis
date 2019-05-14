@@ -8,33 +8,34 @@ class UNet3D(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.down1 = nn.Conv3d(4, 32, kernel_size=3, padding=1)
-        self.down2 = nn.Conv3d(32, 64, kernel_size=3, padding=1)
-        self.down3 = nn.Conv3d(64, 128, kernel_size=3, padding=1)
-        self.down4 = nn.Conv3d(128, 256, kernel_size=3, padding=1)
+        self.down1 = nn.Conv3d(4, 8, kernel_size=3, padding=1)
+        self.down2 = nn.Conv3d(8, 16, kernel_size=3, padding=1)
+        self.down3 = nn.Conv3d(16, 32, kernel_size=3, padding=1)
+        self.down4 = nn.Conv3d(32, 64, kernel_size=3, padding=1)
 
-        self.up1 = nn.ConvTranspose3d(256, 128, kernel_size=3, padding=1)
-        self.up2 = nn.ConvTranspose3d(256, 64, kernel_size=3, padding=1)
-        self.up3 = nn.ConvTranspose3d(128, 32, kernel_size=3, padding=1)
+        self.up1 = nn.ConvTranspose3d(64, 32, kernel_size=3, padding=1)
+        self.up2 = nn.ConvTranspose3d(64, 16, kernel_size=3, padding=1)
+        self.up3 = nn.ConvTranspose3d(32, 8, kernel_size=3, padding=1)
 
-        self.out = nn.Conv3d(64, 4, kernel_size=1)
+        self.out = nn.Conv3d(16, 4, kernel_size=1)
 
     def forward(self, x):
-        block1 = F.relu(self.down1(x))
-        block2 = F.relu(self.down2(block1))
-        block3 = F.relu(self.down3(block2))
-        block4 = F.relu(self.down4(block3))
+        with torch.autograd.set_detect_anomaly(True):
+            block1 = F.relu(self.down1(x))
+            block2 = F.relu(self.down2(block1))
+            block3 = F.relu(self.down3(block2))
+            block4 = F.relu(self.down4(block3))
 
-        block5 = F.relu(self.up1(block4))
-        skipCon1 = torch.cat([block5, block3], dim=1)
-        block6 = F.relu(self.up2(skipCon1))
-        skipCon2 = torch.cat([block6, block2], dim=1)
-        block7 = F.relu(self.up3(skipCon2))
-        skipCon3 = torch.cat([block7, block1], dim=1)
+            block5 = F.relu(self.up1(block4))
+            skipCon1 = torch.cat([block5, block3], dim=1)
+            block6 = F.relu(self.up2(skipCon1))
+            skipCon2 = torch.cat([block6, block2], dim=1)
+            block7 = F.relu(self.up3(skipCon2))
+            skipCon3 = torch.cat([block7, block1], dim=1)
 
-        block8 = self.out(skipCon3)
+            block8 = self.out(skipCon3)
 
-        x_out = F.softmax(block8, dim=1)
+            x_out = F.softmax(block8, dim=1)
 
         return x_out
 

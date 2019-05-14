@@ -51,16 +51,16 @@ cases_to_validate = "/home/liliana/dataToValidate/testfolder_Data/cases_val_fold
 with open(cases_to_validate) as f:
     validation_set = [line.rstrip('\n') for line in f]
 
-dices_file = open(testing_folder['path_to_save_metrics'] + 'dice.txt', 'w')
-hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
+# dices_file = open(testing_folder['path_to_save_metrics'] + 'dice.txt', 'w')
+# hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
 
 
 for case_name in validation_set:
     case_data = get_by_id(dataset_test, case_name)
-    dice, hd = segment_img(case_data, testing_folder)
-    # segment_img(case_data, testing_folder)
-    dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
-    hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
+    segment_img(case_data, testing_folder)
+    # dice, hd = segment_img(case_data, testing_folder)
+    # dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
+    # hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
 
 print('Saving metrics..........')
 dices_file.close()
