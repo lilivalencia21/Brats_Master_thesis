@@ -4,6 +4,10 @@ import os
 import nibabel as nib
 import numpy as np
 from functions.utilities import *
+import copy
+import math
+from functions.patches import get_centers_unif, get_patch_slices
+
 
 
 def segment_img(image_case, testing_cfg):
@@ -19,6 +23,14 @@ def segment_img(image_case, testing_cfg):
     mean = image_case['mean']
     std_dev = image_case['std_dev']
     input_images = norm_array(intensity_images, mean, std_dev)
+
+    #Add 4 slices to z axis
+    # norm_images = norm_array(intensity_images, mean, std_dev)
+    # input_images = []
+    # for img in norm_images:
+    #     expand_z_axis = np.zeros((240, 240, 160))
+    #     expand_z_axis[:, :, :155] = img
+    #     input_images.append(expand_z_axis)
 
     img = np.expand_dims(input_images, axis=0)
     test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
@@ -66,4 +78,49 @@ def save_segmentation_img(img_segm, original_img, path_to_save, segmentation_nam
 
     print('Segmented image saved')
 
+def segment_img_patches(image_case, testing_cfg):
+    model = testing_cfg['model']
+    model.load_state_dict(torch.load(testing_cfg['model_path']))
+    model.to(testing_cfg['device'])
+    model.eval()
+    device = testing_cfg['device']
 
+    nifti_image = nib.load(image_case['image_paths'][0])
+    intensity_images = load_images(image_case['image_paths'])
+    mean = image_case['mean']
+    std_dev = image_case['std_dev']
+    norm_case = norm_array(intensity_images, mean, std_dev)
+
+    vol_shape = norm_case.shape[-3:]
+    patch_shape = (32,32,32)
+    unif_step = (32,32,32)
+    centers = get_centers_unif(vol_shape, patch_shape, unif_step)
+    slices = get_patch_slices(centers, patch_shape, step=None)
+
+    output = torch.zeros(norm_case.shape)
+
+    for slice_patch in slices:
+        input_case = norm_case[slice_patch]
+
+        img = np.expand_dims(input_case, axis=0)
+        test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
+
+        with torch.no_grad():
+            testing = model(test_input)
+
+        testing_dimRed = torch.squeeze(testing, dim=0)
+        output[slice_patch] = testing_dimRed
+
+    testing_np = output.cpu().detach().numpy()
+    results = np.argmax(testing_np, axis=0)
+
+    if np.any(results == 3):
+        results[results == 3] = 4
+
+    # segmentation_result = np.squeeze(results, axis=0)
+
+
+
+    segm_name = '{}.nii.gz'.format(image_case['id'])
+    print('Saving image segmentation result as {}'.format(segm_name))
+    save_segmentation_img(results, nifti_image, testing_cfg['path_to_save_segm'], segm_name)

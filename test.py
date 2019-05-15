@@ -4,8 +4,10 @@ import nibabel as nib
 from functions.utilities import *
 from functions.instructions import *
 from functions.patches import *
-from functions.nets import *
+from functions.nets import UNet3D
 from functions.testing_functions import *
+from functions.models_sergi import ResUnet, Unet3D
+from functions.testing_functions import segment_img_patches
 
 #To use with test_cross_validation function.
 crossvalidation_cfg = {'model': UNet3D(),
@@ -36,18 +38,18 @@ testing_diceLoss = {'model': UNet3D(),
                        'path_to_save_segm':"/home/liliana/Results/DiceLossUNet3DResults/Fold1/",
                        'path_to_save_txt': "/home/liliana/Results/DiceLossUNet3DResults/Fold1/" + 'fold_1.txt'}
 
-testing_folder = {'model': UNet3D(),
+testing_folder = {'model':ResUnet(4,4, scale=1),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-                       'model_path': "/home/liliana/models/testfolder_Model/testChanges_from_0_to_4_fold_1.pt",
-                       'training_set_txt':"/home/liliana/dataToValidate/testfolder_Data/cases_train_fold_1.txt",
-                       'path_to_save_segm':"/home/liliana/Results/testfolderResults/Fold1/",
-                       'path_to_save_metrics': "/home/liliana/Results/testfolderResults/Fold1/"}
+                       'model_path': "/home/liliana/models/ResNetCrossEntropy_Model/ResNetCrossEntropy_from_0_to_4_fold_1.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/ResNetCrossEntropy_Data/cases_train_fold_1.txt",
+                       'path_to_save_segm':"/home/liliana/Results/ResNetCrossEntropyResults/",
+                       'path_to_save_metrics': "/home/liliana/Results/ResNetCrossEntropyResults/"}
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 # test_cross_validation(dataset_test, testing_folder)
-cases_to_validate = "/home/liliana/dataToValidate/testfolder_Data/cases_val_fold_1.txt"
+cases_to_validate = "/home/liliana/dataToValidate/ResNetCrossEntropy_Data/cases_val_fold_1.txt"
 with open(cases_to_validate) as f:
     validation_set = [line.rstrip('\n') for line in f]
 
@@ -57,12 +59,14 @@ with open(cases_to_validate) as f:
 
 for case_name in validation_set:
     case_data = get_by_id(dataset_test, case_name)
-    segment_img(case_data, testing_folder)
+    # segment_img(case_data, testing_folder)
+    # segmentation_img_patches(case_data, testing_folder)
+    segment_img_patches(case_data, testing_folder)
     # dice, hd = segment_img(case_data, testing_folder)
     # dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
     # hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
 
-print('Saving metrics..........')
-dices_file.close()
-hausdorff_file.close()
+# print('Saving metrics..........')
+# dices_file.close()
+# hausdorff_file.close()
 

@@ -4,9 +4,11 @@ from functions.utilities import *
 from functions.instructions import *
 from functions.patches import *
 import torch
-from functions.nets import *
+from functions.nets import UNet3D
 from functions.Training import *
-from functions.loss_function import *
+from functions.loss_function import cross_entropy_wrapper, dice_loss
+from functions.models_sergi import ResUnet, Unet3D
+
 
 
 data_dir_train = "/home/liliana/Data/train"
@@ -18,19 +20,19 @@ dataset = load_dataset(data_dir_train)
 print('Length of dataset is {}'.format(len(dataset)))
 
 #Basic UNet parameters
-params = {'batch_size':32,
+params = {'batch_size':64,
               'shuffle': True,
               'num_workers': 64}
 #
 experiment_cfg = {'patch_shape' : (32, 32, 32),
                'step' :  (12, 12, 12),
                'sampler' : BalancedSampler,
-               'model':UNet3D(),
+               'model':ResUnet(4, 4, scale=1),
                'epochs': 10,
-               'model_name': 'testChanges',
+               'model_name': 'ResNetCrossEntropy',
                'patience': 3,
-               'pathToCasesNames':"/home/liliana/dataToValidate/testfolder_Data/",
-               'pathToSaveModel': "/home/liliana/models/testfolder_Model/",
+               'pathToCasesNames':"/home/liliana/dataToValidate/ResNetCrossEntropy_Data/",
+               'pathToSaveModel': "/home/liliana/models/ResNetCrossEntropy_Model/",
                'loss_function': dice_loss}
 
 experiment_cfg.update({'sampler' : BalancedSampler(experiment_cfg['patch_shape'], 4, num_elements=500)})
@@ -59,3 +61,4 @@ experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_
 
 
 cross_validation(dataset, params, experiment_cfg)
+# cross_validation(dataset, params_nnn, experiment_nnn_cfg)
