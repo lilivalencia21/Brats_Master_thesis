@@ -4,7 +4,7 @@ import nibabel as nib
 from functions.utilities import *
 from functions.instructions import *
 from functions.patches import *
-from functions.nets import UNet3D
+from functions.nets import UNet3D, UNet3DNNN
 from functions.testing_functions import *
 from functions.models_sergi import ResUnet, Unet3D
 from functions.testing_functions import segment_img_patches
@@ -38,35 +38,32 @@ testing_diceLoss = {'model': UNet3D(),
                        'path_to_save_segm':"/home/liliana/Results/DiceLossUNet3DResults/Fold1/",
                        'path_to_save_txt': "/home/liliana/Results/DiceLossUNet3DResults/Fold1/" + 'fold_1.txt'}
 
-testing_folder = {'model':ResUnet(4,4, scale=1),
+testing_folder = {'model':UNet3D(),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-                       'model_path': "/home/liliana/models/ResNetCrossEntropy_Model/ResNetCrossEntropy_from_0_to_4_fold_1.pt",
-                       'training_set_txt':"/home/liliana/dataToValidate/ResNetCrossEntropy_Data/cases_train_fold_1.txt",
-                       'path_to_save_segm':"/home/liliana/Results/ResNetCrossEntropyResults/",
-                       'path_to_save_metrics': "/home/liliana/Results/ResNetCrossEntropyResults/"}
+                       'model_path': "/home/liliana/models/Unet100Cases_Model/UNet3N_from_0_to_24_fold_1.pt",
+                       'training_set_txt':"/home/liliana/dataToValidate/Unet100Cases_Data/cases_train_fold_1.txt",
+                       'path_to_save_segm':"/home/liliana/Results/Unet100casesResults/",
+                       'path_to_save_metrics': "/home/liliana/Results/Unet100casesResults/"}
 
 
 data_dir_test = "/home/liliana/Data/train"
 dataset_test = load_dataset(data_dir_test)
 # test_cross_validation(dataset_test, testing_folder)
-cases_to_validate = "/home/liliana/dataToValidate/ResNetCrossEntropy_Data/cases_val_fold_1.txt"
+cases_to_validate = "/home/liliana/dataToValidate/Unet100Cases_Data/cases_val_fold_1.txt"
 with open(cases_to_validate) as f:
     validation_set = [line.rstrip('\n') for line in f]
 
-# dices_file = open(testing_folder['path_to_save_metrics'] + 'dice.txt', 'w')
-# hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
+dices_file = open(testing_folder['path_to_save_metrics'] + 'dice.txt', 'w')
+hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
 
 
 for case_name in validation_set:
     case_data = get_by_id(dataset_test, case_name)
-    # segment_img(case_data, testing_folder)
-    # segmentation_img_patches(case_data, testing_folder)
-    segment_img_patches(case_data, testing_folder)
-    # dice, hd = segment_img(case_data, testing_folder)
-    # dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
-    # hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
+    dice, hd = segment_img(case_data, testing_folder)
+    dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
+    hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
 
-# print('Saving metrics..........')
-# dices_file.close()
-# hausdorff_file.close()
+print('Saving metrics..........')
+dices_file.close()
+hausdorff_file.close()
 

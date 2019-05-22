@@ -24,14 +24,6 @@ def segment_img(image_case, testing_cfg):
     std_dev = image_case['std_dev']
     input_images = norm_array(intensity_images, mean, std_dev)
 
-    #Add 4 slices to z axis
-    # norm_images = norm_array(intensity_images, mean, std_dev)
-    # input_images = []
-    # for img in norm_images:
-    #     expand_z_axis = np.zeros((240, 240, 160))
-    #     expand_z_axis[:, :, :155] = img
-    #     input_images.append(expand_z_axis)
-
     img = np.expand_dims(input_images, axis=0)
     test_input = torch.tensor(img, dtype=torch.float32, requires_grad=False, device=device)
 
@@ -46,16 +38,16 @@ def segment_img(image_case, testing_cfg):
 
     segmentation_result = np.squeeze(results, axis=0)
 
-    # gt = load_images(image_case['gt_path'])
-    # dice, hausdorff = compute_multiclass_metrics(gt, segmentation_result)
-    # print('Dice for case {} is {}'.format(image_case['id'], dice))
-    # print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
+    gt = load_images(image_case['gt_path'])
+    dice, hausdorff = compute_multiclass_metrics(gt, segmentation_result)
+    print('Dice for case {} is {}'.format(image_case['id'], dice))
+    print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
 
     segm_name = '{}.nii.gz'.format(image_case['id'])
     print('Saving image segmentation result as {}'.format(segm_name))
     save_segmentation_img(segmentation_result, nifti_image, testing_cfg['path_to_save_segm'],segm_name)
 
-    # return dice, hausdorff
+    return dice, hausdorff
 
 def load_validation_cases(dataset, training_set_txt):
 
@@ -92,8 +84,8 @@ def segment_img_patches(image_case, testing_cfg):
     norm_case = norm_array(intensity_images, mean, std_dev)
 
     vol_shape = norm_case.shape[-3:]
-    patch_shape = (32,32,32)
-    unif_step = (32,32,32)
+    patch_shape = (128,128,128)
+    unif_step = (128,128,128)
     centers = get_centers_unif(vol_shape, patch_shape, unif_step)
     slices = get_patch_slices(centers, patch_shape, step=None)
 
