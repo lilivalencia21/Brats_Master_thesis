@@ -4,15 +4,15 @@ import torch
 from functions.utilities import load_dataset
 from functions.instructions import BalancedSampler, UniformSampler
 from functions.patches import *
-from functions.nets import UNet3D, UNet3DNNN
+from functions.nets import UNet3D
 from functions.Training import cross_validation
 from functions.loss_function import cross_entropy_wrapper, dice_loss
 from functions.models_sergi import ResUnet, Unet3D
 
 
 
-data_dir_train = "/home/liliana/Data/train"
-# data_dir_train = "/home/liliana/Brats18TrainingData/"
+# data_dir_train = "/home/liliana/Data/train"
+data_dir_train = "/home/liliana/Brats18TrainingData/"
 
 print("Loading dataset...")
 #load the dataset
@@ -27,7 +27,7 @@ params = {'batch_size':64,
 experiment_cfg = {'patch_shape' : (24, 24, 24),
                'step' :  (12, 12, 12),
                'sampler' : BalancedSampler,
-               'model':UNet3D(),
+               'model':UNet3D,
                'epochs': 10,
                'model_name': 'UNet50CasesLVR',
                'patience': 3,
@@ -45,12 +45,12 @@ params_nnn = {'batch_size':2,
               'num_workers': 64}
 #
 experiment_nnn_cfg = {'patch_shape' : (128, 128, 128),
-               'step' :  (32, 32, 32),
+               'step' :  (16, 16, 16),
                'sampler' : UniformSampler,
-               'model':UNet3D(),
-               'epochs': 10,
+               'model':UNet3D,
+               'epochs': 15,
                'model_name': 'UNet3N',
-               'patience': 3,
+               'patience': 5,
                'pathToCasesNames':"/home/liliana/dataToValidate/Unet100Cases_Data/",
                'pathToSaveModel': "/home/liliana/models/Unet100Cases_Model/",
                'loss_function': dice_loss}
@@ -61,4 +61,3 @@ experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_
 
 
 cross_validation(dataset, params_nnn, experiment_nnn_cfg)
-# cross_validation(dataset, params_nnn, experiment_nnn_cfg)

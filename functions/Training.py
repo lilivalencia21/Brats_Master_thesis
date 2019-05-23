@@ -175,7 +175,7 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         print("Generated {} validation instructions from {} images".format(len(instructions_val), len(val_set)))
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = experiment_cfg['model']
+        model = experiment_cfg['model']()
         model.to(device)
 
         max_epochs = experiment_cfg['epochs']
