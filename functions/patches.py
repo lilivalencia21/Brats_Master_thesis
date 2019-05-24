@@ -21,9 +21,7 @@ def get_patch_slices(centers, patch_shape, step=None):
                        slice(center[2] - half_sizes[2][0], center[2] + half_sizes[2][1] + 1, step))
         patch_locations.append(patch_slice)
 
-
     return patch_locations
-
 
 def get_centers_unif(vol_shape, patch_shape, unif_step):
     """
@@ -46,7 +44,6 @@ def get_centers_unif(vol_shape, patch_shape, unif_step):
     centers = [[x, y, z] for x, y, z in itertools.product(idx_x, idx_y, idx_z)]
 
     return centers
-
 
 def extract_patch(instruction, dataset):
     # get case_dict with 'id'

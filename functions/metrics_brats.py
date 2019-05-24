@@ -11,16 +11,16 @@ def compute_multiclass_metrics(y_true, y_pred):
     nclasses = np.unique(y_true)
     y_true = y_true.squeeze(0)
     dice = []
-    hausdorff_distance = []
+    # hausdorff_distance = []
     for c in nclasses:
         seg = y == c
         gt = y_true == c
         dice_class = dice_coef(gt, seg)
         dice.append(dice_class)
-        hausdorff = hausdorff_dist(gt, seg)
-        hausdorff_distance.append(hausdorff)
+        # hausdorff = hausdorff_dist(gt, seg)
+        # hausdorff_distance.append(hausdorff)
 
-    return dice, hausdorff
+    return dice
 
 def dice_coef(y_true, y_pred):
     intersection = np.sum(np.logical_and(y_true, y_pred))
