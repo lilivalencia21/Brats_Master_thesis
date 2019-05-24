@@ -12,7 +12,7 @@ from functions.patches import get_centers_unif, get_patch_slices
 
 def segment_img(image_case, testing_cfg):
 
-    model = testing_cfg['model']()
+    model = testing_cfg['model']
     model.load_state_dict(torch.load(testing_cfg['model_path']))
     model.to(testing_cfg['device'])
     model.eval()
@@ -39,15 +39,15 @@ def segment_img(image_case, testing_cfg):
     segmentation_result = np.squeeze(results, axis=0)
 
     gt = load_images(image_case['gt_path'])
-    dice = compute_multiclass_metrics(gt, segmentation_result)
+    dice, hausdorff = compute_multiclass_metrics(gt, segmentation_result)
     print('Dice for case {} is {}'.format(image_case['id'], dice))
-    # print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
+    print('Hausdorff for case {} is {}'.format(image_case['id'], hausdorff))
 
     segm_name = '{}.nii.gz'.format(image_case['id'])
     print('Saving image segmentation result as {}'.format(segm_name))
     save_segmentation_img(segmentation_result, nifti_image, testing_cfg['path_to_save_segm'],segm_name)
 
-    return dice
+    return dice, hausdorff
 
 def load_validation_cases(dataset, training_set_txt):
 

@@ -11,57 +11,53 @@ from functions.models_sergi import ResUnet, Unet3D
 
 
 
-data_dir_train = "/home/liliana/Data/train"
-# data_dir_train = "/home/liliana/Brats18TrainingData/"
+# data_dir_train = "/home/liliana/Data/train"
+data_dir_train = "/home/liliana/Brats18TrainingData/"
 
 print("Loading dataset...")
 #load the dataset
 dataset = load_dataset(data_dir_train)
 print('Length of dataset is {}'.format(len(dataset)))
 
-
-params = {'batch_size':128,
+#Basic UNet parameters
+params = {'batch_size':64,
               'shuffle': True,
-              'num_workers': 10}
+              'num_workers': 64}
 #
-experiment_cfg = {'patch_shape' : (32, 32, 32),
+experiment_cfg = {'patch_shape' : (24, 24, 24),
                'step' :  (12, 12, 12),
-               'sampler' : UniformSampler,
+               'sampler' : BalancedSampler,
                'model':UNet3D,
-               'epochs': 15,
-               'model_name': 'UNetUniformSampling32',
-               'patience': 5,
-               'pathToCasesNames':"/home/liliana/dataToValidate/UNetUniformSampling32_Data/",
-               'pathToSaveModel': "/home/liliana/models/UNetUniformSampling32_Model/",
+               'epochs': 10,
+               'model_name': 'UNet50CasesLVR',
+               'patience': 3,
+               'pathToCasesNames':"/home/liliana/dataToValidate/Unet100Cases_Data/",
+               'pathToSaveModel': "/home/liliana/models/Unet100Cases_Model/",
                'loss_function': dice_loss}
 
+experiment_cfg.update({'sampler' : BalancedSampler(experiment_cfg['patch_shape'], 4, num_elements=2000)})
 
-experiment_cfg.update({'sampler' : UniformSampler(experiment_cfg['patch_shape'], experiment_cfg['step'],
-                                                      num_elements=None)})
-
-cross_validation(dataset, params, experiment_cfg)
 
 #Testing No New-net configuration
 
-# params_nnn = {'batch_size':2,
-#               'shuffle': True,
-#               'num_workers': 64}
-# #
-# experiment_nnn_cfg = {'patch_shape' : (128, 128, 128),
-#                'step' :  (16, 16, 16),
-#                'sampler' : UniformSampler,
-#                'model':UNet3D,
-#                'epochs': 15,
-#                'model_name': 'UNet3N',
-#                'patience': 5,
-#                'pathToCasesNames':"/home/liliana/dataToValidate/Unet100Cases_Data/",
-#                'pathToSaveModel': "/home/liliana/models/Unet100Cases_Model/",
-#                'loss_function': dice_loss}
+params_nnn = {'batch_size':2,
+              'shuffle': True,
+              'num_workers': 64}
 #
-# # experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=1000)})
-# experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'],
-#                                                       num_elements=None})
-# #
-# #
-# cross_validation(dataset, params_nnn, experiment_nnn_cfg)
+experiment_nnn_cfg = {'patch_shape' : (128, 128, 128),
+               'step' :  (16, 16, 16),
+               'sampler' : UniformSampler,
+               'model':UNet3D,
+               'epochs': 15,
+               'model_name': 'UNet3N',
+               'patience': 5,
+               'pathToCasesNames':"/home/liliana/dataToValidate/Unet100Cases_Data/",
+               'pathToSaveModel': "/home/liliana/models/Unet100Cases_Model/",
+               'loss_function': dice_loss}
 
+# experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=1000)})
+experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'],
+                                                      num_elements=None)})
+
+
+cross_validation(dataset, params_nnn, experiment_nnn_cfg)

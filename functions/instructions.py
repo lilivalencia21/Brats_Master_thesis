@@ -5,7 +5,6 @@ from functions.patches import *
 import torch
 import copy
 
-
 from abc import ABC, abstractmethod
 
 class Sampler(ABC):
@@ -20,9 +19,7 @@ class UniformSampler(Sampler):
         self.num_elements = num_elements
 
     def get_centers(self, case):
-        # vol_shape = case['nifti_headers'][0]['dim'][1:4]
-        vol_shape = case['images'].shape[1:]
-
+        vol_shape = case['nifti_headers'][0]['dim'][1:4]
         centers = get_centers_unif(vol_shape, self.patch_shape, self.unif_step)
 
         return centers[:self.num_elements] if self.num_elements is not None else centers
@@ -67,6 +64,7 @@ def generate_instruction(dataset, sampler, patch_shape):
     instructions = []
 
     for case in dataset:
+        vol_shape = case['nifti_headers'][0]['dim'][1:4]
         data_centers = sampler.get_centers(case)
         data_slices = get_patch_slices(data_centers, patch_shape, step=None)
 
@@ -85,14 +83,14 @@ class BratsDatasetLoader(Dataset):  # Inheritance
 
         print("Preloading images...")
         for case_idx in range(len(self.dataset)):
-            # self.dataset[case_idx]['images'] = load_images(self.dataset[case_idx]['image_paths'])
-            #
+            self.dataset[case_idx]['images'] = load_images(self.dataset[case_idx]['image_paths'])
+            #Added to try to optimize time
             self.dataset[case_idx]['norm_images']=norm_array(self.dataset[case_idx]['images'],self.dataset[case_idx]['mean'],
                                                              self.dataset[case_idx]['std_dev'])
-            #
-            # self.dataset[case_idx]['gt'] = load_images(self.dataset[case_idx]['gt_path'], GT=True)
 
-            self.instructions = instructions
+            self.dataset[case_idx]['gt'] = load_images(self.dataset[case_idx]['gt_path'], GT=True)
+
+        self.instructions = instructions
 
     def __len__(self):
         """

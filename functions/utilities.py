@@ -6,11 +6,9 @@ import torch
 import operator
 import random
 from functions.metrics_brats import *
-import itertools
-import sys
 
 
-def load_case(case_folder, brain_mask=False):
+def load_case(case_folder):
     case_dict = {}
 
     case_name = case_folder.split('/')[-1]
@@ -24,25 +22,13 @@ def load_case(case_folder, brain_mask=False):
 
     case_dict['id'] = case_name
 
-    # data = [nib.load(images) for images in case_dict['image_paths']]
+    data = [nib.load(images) for images in case_dict['image_paths']]
 
-    data_images = load_images(case_dict['image_paths'])
-    data_gt = load_images(case_dict['gt_path'], GT=True)
-    case_dict['images'] = data_images
-    case_dict['gt'] = data_gt
+    case_dict['nifti_headers'] = list([img.header for img in data])
 
-    if brain_mask:
-        brain_mask_slices = brain_box_img(data_images[0])
-        case_dict['gt'] = np.stack([img[brain_mask_slices] for img in data_gt], axis=0)
-        case_dict['images'] = np.stack([img[brain_mask_slices] for img in data_images], axis=0)
+    case_dict['mean'] = np.stack([np.mean(img.get_data()) for img in data], axis=0).astype(np.float)
 
-    # case_dict['nifti_headers'] = list([img.header for img in data])
-
-    case_dict['mean'] = np.stack([np.mean(img) for img in case_dict['images']], axis=0).astype(np.float)
-
-    case_dict['std_dev'] = np.stack([np.std(img) for img in case_dict['images']], axis=0).astype(np.float)
-
-    # case_dict['norm_images'] = norm_array(images, case_dict['mean'],  case_dict['std_dev'])
+    case_dict['std_dev'] = np.stack([np.std(img.get_data()) for img in data], axis=0).astype(np.float)
 
     return case_dict
 
@@ -60,13 +46,13 @@ def split_dataset(dataset, train_percentage):
     return train_set, val_set
 
 
-def load_dataset(data_dir_train, brain_mask=False):
+def load_dataset(data_dir_train):
     dataset = []
-    mask = brain_mask
+
     for case_name in os.listdir(data_dir_train):
         case_path = os.path.join(data_dir_train, case_name)
 
-        dataset.append(load_case(case_path, brain_mask=mask))
+        dataset.append(load_case(case_path))
 
     return dataset
 
@@ -109,6 +95,7 @@ def nic_binary_accuracy(y_pred, y_true, class_dim=1):
     y_pred_categorical = torch.argmax(y_pred, dim=class_dim)
     return torch.mean(torch.eq(y_true, y_pred_categorical).float())
 
+import sys
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 25, fill = '='):
@@ -123,18 +110,3 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
     # Print New Line on Complete
     if iteration == total:
         print(' ')
-
-def brain_box_img(img_flair):
-    bb = bbox2_ND(img_flair)
-    brain_box_vol_slice = (slice(bb[0], bb[1]), slice(bb[2], bb[3]), slice(bb[4], bb[5]))
-    # brain = image[volume]
-    return brain_box_vol_slice
-
-
-def bbox2_ND(img):
-    N = img.ndim
-    out = []
-    for ax in itertools.combinations(reversed(range(N)), N - 1):
-        nonzero = np.any(img, axis=ax)
-        out.extend(np.where(nonzero)[0][[0, -1]])
-    return tuple(out)
