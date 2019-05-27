@@ -8,10 +8,13 @@ from functions.instructions import *
 from functions.nets import *
 from functions.loss_function import *
 from functions.utilities import *
+import math
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name, model_path, patience=3):
     print('Training started')
+
+    np.set_printoptions(precision=2)
 
     patience = patience
 
@@ -21,6 +24,8 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
     # to track the validation loss and accuracy as the model trains
     valid_losses = []
     valid_accuracies = []
+    train_dices = []
+    val_dices = []
 
     # initialize the early_stopping object
     early_stopping = EarlyStopping(model_name, model_path, patience=patience, verbose=True)
@@ -30,6 +35,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
         running_loss = 0.0
         running_accuracy = 0.0
         start = time.time()
+        running_dice = np.zeros(4)
 
         # Training
         minibatches = 0
@@ -40,18 +46,17 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
             # forward + backward + optimize
             optimizer.zero_grad()
             output = model(local_batch)
-            loss = loss_function(output, target)
+            loss, dice_train = loss_function(output, target)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
             running_loss += loss.item()
-            accuracy = nic_binary_accuracy(output, target)
-            train_accuracies.append(accuracy)
-            running_accuracy += accuracy.item()
+            train_dices.append(dice_train)
+            running_dice = np.sum(train_dices, axis=0)
 
             pref = 'Epoch={}'.format(epoch + 1)
             suff = 'loss --- ' + 'Training: {0:.5f}'.format(
-                running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(running_accuracy / (minibatches + 1))
+                running_loss / (minibatches + 1)) + ' DSC: {}'.format(running_dice / (minibatches + 1))
             printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
 
         printProgressBar(len(train_gen), len(train_gen) )
@@ -59,6 +64,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
         running_loss = 0.0
         minibatches = 0.0
         running_accuracy = 0.0
+        running_dice = torch.zeros(1, 4)
 
 
         # Validation
@@ -71,19 +77,21 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
                 output = model(local_batch)
                 target = local_labels
 
-                loss = loss_function(output, target)
+                loss, dice_val = loss_function(output, target)
                 minibatches = i
                 valid_losses.append(loss.item())
                 running_loss += loss.item()
                 valid_loss = np.average(valid_losses)
 
-                accuracy = nic_binary_accuracy(output, target)
-                valid_accuracies.append(accuracy)
-                running_accuracy += accuracy.item()
+                # accuracy = nic_binary_accuracy(output, target)
+                # valid_accuracies.append(accuracy)
+                # running_accuracy += accuracy.item()
+                val_dices.append(dice_val)
+                running_dice = np.sum(val_dices, axis=0)
 
                 suff = 'loss --- ' + 'Validation: {0:.5f}'.format(
-                    running_loss / (minibatches + 1)) + ' Accuracy: {0:.5f}'.format(
-                    running_accuracy / (minibatches + 1))
+                    running_loss / (minibatches + 1)) + ' DSC: {}'.format(
+                    running_dice / (minibatches + 1))
                 pref = 'Epoch={}'.format(epoch+1)
                 printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
 
@@ -91,12 +99,15 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
 
         running_loss = 0.0
         running_accuracy = 0.0
+        running_dice = torch.zeros(1, 4)
 
         # clear lists to track next epoch
         train_losses = []
         valid_losses = []
         train_accuracies = []
         valid_accuracies = []
+        train_dices = []
+        val_dices = []
 
         # early_stopping needs the validation loss to check if it has decresed,
         # and if it has, it will make a checkpoint of the current model
@@ -212,12 +223,16 @@ class EarlyStopping:
 
     def __call__(self, val_loss, model, model_path):
 
-        score = -val_loss
+        if np.isnan(val_loss) is True:
+            val_loss = 0.0
 
+        score = -val_loss
         if self.best_score is None:
             self.best_score = score
             self.save_checkpoint(val_loss, model, model_path)
             self.val_loss_min = val_loss
+
+
         elif score < self.best_score:
             self.counter += 1
             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')

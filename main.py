@@ -11,8 +11,8 @@ from functions.models_sergi import ResUnet, Unet3D
 
 
 
-# data_dir_train = "/home/liliana/Data/train"
-data_dir_train = "/home/liliana/Brats18TrainingData/"
+data_dir_train = "/home/liliana/Data/train"
+# data_dir_train = "/home/liliana/Brats18TrainingData/"
 
 print("Loading dataset...")
 #load the dataset
@@ -45,15 +45,15 @@ params_nnn = {'batch_size':128,
               'shuffle': True,
               'num_workers': 64}
 #
-# experiment_nnn_cfg = {'patch_shape' : (128, 128, 128),
+# experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
 #                'step' :  (16, 16, 16),
 #                'sampler' : UniformSampler,
 #                'model':UNet3D,
 #                'epochs': 15,
-#                'model_name': 'UNet3N',
+#                'model_name': 'Debbuging',
 #                'patience': 5,
-#                'pathToCasesNames':"/home/liliana/dataToValidate/UNetUniformSampling32_Data/",
-#                'pathToSaveModel': "/home/liliana/models/UNetUniformSampling32_Model/",
+#                'pathToCasesNames':"/home/liliana/dataToValidate/Debbuging_Data/",
+#                'pathToSaveModel': "/home/liliana/dataToValidate/Debbuging_Data/",
 #                'loss_function': dice_loss}
 
 experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
