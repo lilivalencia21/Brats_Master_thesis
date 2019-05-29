@@ -12,6 +12,8 @@ from functions.patches import get_centers_unif, get_patch_slices
 
 def segment_img(image_case, testing_cfg):
 
+    np.set_printoptions(precision=2)
+
     model = testing_cfg['model']
     model.load_state_dict(torch.load(testing_cfg['model_path']))
     model.to(testing_cfg['device'])
@@ -20,8 +22,11 @@ def segment_img(image_case, testing_cfg):
 
     nifti_image = nib.load(image_case['image_paths'][0])
     intensity_images = load_images(image_case['image_paths'])
-    mean = image_case['mean']
-    std_dev = image_case['std_dev']
+    # mean = image_case['mean']
+    mean = np.stack([np.mean(img) for img in intensity_images], axis=0)
+    # std_dev = image_case['std_dev']
+    std_dev = np.stack([np.std(img) for img in intensity_images], axis=0)
+
     input_images = norm_array(intensity_images, mean, std_dev)
 
     img = np.expand_dims(input_images, axis=0)

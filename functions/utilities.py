@@ -156,7 +156,7 @@ def bbox2_ND(img):
     return tuple(out)
 
 def padd_img(image):
-    padd = np.zeros((192, 192, 192))
-    padd[:image.shape[0], :image.shape[1], :image.shape[2]] = image
+    padd = np.pad(image,((16,16),(16,16),(16,16)), 'constant', constant_values=0)
     return padd
+
 

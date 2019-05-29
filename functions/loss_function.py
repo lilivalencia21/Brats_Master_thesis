@@ -32,10 +32,13 @@ def dice_loss(output, target, smooth=0.0001):
     num = torch.sum(output * target_tocat, dim=reduction_dim)
     den = torch.sum(output, dim=reduction_dim) + torch.sum(target_tocat, dim=reduction_dim) + smooth
 
-    loss = (-(2.0 * torch.sum((num/den), dim=1))).mean()
+    loss = - 2.0 * (torch.mean(num/den, dim=1)).mean()
+
+    num_dice_class = num
+    den_dice_class = den
 
     with torch.set_grad_enabled(False):
-        dice_class = torch.sum((num/den), dim=0).cpu().detach().numpy()
+        dice_class = 2.0 * torch.mean((num_dice_class/den_dice_class), dim=0).cpu().detach().numpy()
 
     return loss, dice_class
 
@@ -56,8 +59,11 @@ def soft_dice(net_output, gt, smooth=1., smooth_in_nom=1.):
     denom = sum_tensor(net_output + target_tocat, axes, keepdim=False)
     result = (- ((2 * intersect + smooth_in_nom) / (denom + smooth))).mean()
 
+    num_dice_class = intersect
+    den_dice_class = denom
+
     with torch.set_grad_enabled(False):
-        dice_class = torch.mean(((intersect + smooth_in_nom) /(denom + smooth)), dim=0).cpu().detach().numpy()
+        dice_class = torch.mean(((num_dice_class + smooth_in_nom) /(den_dice_class + smooth)), dim=0).cpu().detach().numpy()
 
     return result, dice_class
 

@@ -9,6 +9,7 @@ from functions.nets import *
 from functions.loss_function import *
 from functions.utilities import *
 import math
+from functions.testing_functions import segment_img
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name, model_path, patience=3):
@@ -197,6 +198,27 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         patience = experiment_cfg['patience']
         train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name_fold, model_path, patience)
 
+        testing_folder = {'model': UNet3D(),
+                          'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                          'model_path': experiment_cfg['pathToSaveModel'] + model_name_fold,
+                          'path_to_save_segm': experiment_cfg['path_Results'],
+                          'path_to_save_metrics': experiment_cfg['path_Results']}
+
+        # cases_to_validate = experiment_cfg['pathToCasesNames']+ 'cases_val_fold_{}.txt'.format(i+1)
+        # with open(cases_to_validate) as f:
+        #     validation_set = [line.rstrip('\n') for line in f]
+
+        dices_file = open(testing_folder['path_to_save_metrics'] + 'dice_fold_{}.txt'.format(i+1), 'w')
+        # hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
+
+        for case_name in val_cases:
+            case_data = get_by_id(dataset, case_name)
+            dice = segment_img(case_data, testing_folder)
+            dices_file.write('{} \n {} \n'.format(case_name, str(dice)))
+            # hausdorff_file.write('{} \n {} \n'.format(case_name, str(hd)))
+
+        print('Saving metrics..........')
+        dices_file.close()
 
     stop = time.time()
     print('total time for crossvalidation {0:.5f} minutes'.format((stop-start)/60))

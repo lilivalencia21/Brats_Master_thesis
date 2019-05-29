@@ -25,29 +25,30 @@ params_nnn = {'batch_size':128,
               'shuffle': True,
               'num_workers': 64}
 
+# experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
+#                'step' :  (16, 16, 16),
+#                'sampler' : UniformSampler,
+#                'model':UNet3D,
+#                'epochs': 10,
+#                'model_name': 'Debbuging',
+#                'patience': 5,
+#                'pathToCasesNames':"/home/liliana/dataToValidate/Debbuging_Data/",
+#                'pathToSaveModel': "/home/liliana/models/Debbuging_Model/",
+#                'loss_function': dice_loss}
+
 experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
                'step' :  (16, 16, 16),
                'sampler' : UniformSampler,
                'model':UNet3D,
                'epochs': 10,
-               'model_name': 'Debbuging',
+               'model_name': 'brain_mask_padd',
                'patience': 5,
-               'pathToCasesNames':"/home/liliana/dataToValidate/Debbuging_Data/",
-               'pathToSaveModel': "/home/liliana/models/Debbuging_Model/",
+               'pathToCasesNames':"/home/liliana/dataToValidate/FullDatasetPad_Data/",
+               'pathToSaveModel': "/home/liliana/models/FullDatasetPad_Model/",
+                'path_Results': "/home/liliana/Results/FullDatasetPadResults/",
                'loss_function': dice_loss}
 
-# experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
-#                'step' :  (16, 16, 16),
-#                'sampler' : UniformSampler,
-#                'model':UNet3D,
-#                'epochs': 15,
-#                'model_name': 'brain_mask',
-#                'patience': 5,
-#                'pathToCasesNames':"/home/liliana/dataToValidate/testfolder_Data/",
-#                'pathToSaveModel': "/home/liliana/models/testfolder_Model/",
-#                'loss_function': cross_entropy_wrapper}
-
-# experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=1000)})
+# experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=500)})
 experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'],
                                                       num_elements=None)})
 
