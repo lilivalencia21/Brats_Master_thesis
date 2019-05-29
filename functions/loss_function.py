@@ -8,8 +8,8 @@ def to_categorical(target):
     :return: tensor [bs, num_labels, patch_size_x, patch_size_y, patch_size_z]
     """
     target_channels = []
+    nclasses = np.unique(target.cpu().numpy())
     for n in range(4):
-        # target_channels.append((target[:, : , ...] == n).float())
         target_channels.append((target == n).float())
     target_cat = torch.cat(target_channels, dim=1)
 
@@ -28,13 +28,37 @@ def cross_entropy_wrapper(pred, GT):
 def dice_loss(output, target, smooth=0.0001):
     target_tocat = to_categorical(target)   #convert tensor from [bs, 1,..] to [bs, 5, ...]
     reduction_dim = (2, 3, 4)
-    nclasses = len(np.unique(target.cpu().numpy()))
+    # nclasses = len(np.unique(target.cpu().numpy()))
     num = torch.sum(output * target_tocat, dim=reduction_dim)
     den = torch.sum(output, dim=reduction_dim) + torch.sum(target_tocat, dim=reduction_dim) + smooth
 
-    loss = - torch.mean((2.0 / nclasses) * torch.sum((num/den), dim=1))
+    loss = (-(2.0 * torch.sum((num/den), dim=1))).mean()
 
     with torch.set_grad_enabled(False):
         dice_class = torch.sum((num/den), dim=0).cpu().detach().numpy()
 
     return loss, dice_class
+
+def sum_tensor(inp, axes, keepdim=False):
+    axes = np.unique(axes).astype(int)
+    if keepdim:
+        for ax in axes:
+            inp = inp.sum(int(ax), keepdim=True)
+    else:
+        for ax in sorted(axes, reverse=True):
+            inp = inp.sum(int(ax))
+    return inp
+
+def soft_dice(net_output, gt, smooth=1., smooth_in_nom=1.):
+    axes = tuple(range(2, len(net_output.size())))
+    target_tocat = to_categorical(gt)
+    intersect = sum_tensor(net_output * target_tocat, axes, keepdim=False)
+    denom = sum_tensor(net_output + target_tocat, axes, keepdim=False)
+    result = (- ((2 * intersect + smooth_in_nom) / (denom + smooth))).mean()
+
+    with torch.set_grad_enabled(False):
+        dice_class = torch.mean(((intersect + smooth_in_nom) /(denom + smooth)), dim=0).cpu().detach().numpy()
+
+    return result, dice_class
+
+

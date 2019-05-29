@@ -39,9 +39,9 @@ def get_centers_unif(vol_shape, patch_shape, unif_step):
         dim_ranges.append([(patch_shape[dim] // 2) + 1,  # Dim start
                             vol_shape[dim] - (patch_shape[dim] // 2)])
 
-    idx_x = range(dim_ranges[0][0], dim_ranges[0][1], unif_step[0])
-    idx_y = range(dim_ranges[1][0], dim_ranges[1][1], unif_step[1])
-    idx_z = range(dim_ranges[2][0], dim_ranges[2][1], unif_step[2])
+    idx_x = range(dim_ranges[0][0] , dim_ranges[0][1] , unif_step[0])
+    idx_y = range(dim_ranges[1][0] , dim_ranges[1][1] , unif_step[1])
+    idx_z = range(dim_ranges[2][0] , dim_ranges[2][1] , unif_step[2])
 
     centers = [[x, y, z] for x, y, z in itertools.product(idx_x, idx_y, idx_z)]
 

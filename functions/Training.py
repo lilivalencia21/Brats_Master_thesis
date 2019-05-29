@@ -57,6 +57,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
             pref = 'Epoch={}'.format(epoch + 1)
             suff = 'loss --- ' + 'Training: {0:.5f}'.format(
                 running_loss / (minibatches + 1)) + ' DSC: {}'.format(running_dice / (minibatches + 1))
+            # suff = 'loss --- ' + 'Training: {0:.5f}'.format(running_loss / (minibatches + 1))
             printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
 
         printProgressBar(len(train_gen), len(train_gen) )
@@ -64,7 +65,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
         running_loss = 0.0
         minibatches = 0.0
         running_accuracy = 0.0
-        running_dice = torch.zeros(1, 4)
+        running_dice = np.zeros(4)
 
 
         # Validation
@@ -82,16 +83,14 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
                 valid_losses.append(loss.item())
                 running_loss += loss.item()
                 valid_loss = np.average(valid_losses)
-
-                # accuracy = nic_binary_accuracy(output, target)
-                # valid_accuracies.append(accuracy)
-                # running_accuracy += accuracy.item()
                 val_dices.append(dice_val)
                 running_dice = np.sum(val_dices, axis=0)
 
                 suff = 'loss --- ' + 'Validation: {0:.5f}'.format(
                     running_loss / (minibatches + 1)) + ' DSC: {}'.format(
                     running_dice / (minibatches + 1))
+                # suff = 'loss --- ' + 'Validation: {0:.5f}'.format(
+                #     running_loss / (minibatches + 1))
                 pref = 'Epoch={}'.format(epoch+1)
                 printProgressBar(minibatches, len(train_gen), prefix=pref, suffix=suff)
 
@@ -99,7 +98,7 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
 
         running_loss = 0.0
         running_accuracy = 0.0
-        running_dice = torch.zeros(1, 4)
+        running_dice = np.zeros(4)
 
         # clear lists to track next epoch
         train_losses = []

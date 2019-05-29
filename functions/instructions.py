@@ -55,6 +55,7 @@ class BalancedSampler(Sampler):
         # Put in ndarray format
         centers = []
         for i in range(len(centers_taple[0])):
+            # if centers_taple[0][i] >  |
             centers.append([centers_taple[0][i], centers_taple[1][i], centers_taple[2][i]])
 
         return centers

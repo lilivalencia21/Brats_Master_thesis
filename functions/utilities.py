@@ -31,16 +31,19 @@ def load_case(case_folder, brain_mask=False):
 
     if brain_mask:
         brain_mask_slices = brain_box_img(data_images[0])
-        case_dict['gt'] = np.stack([img[brain_mask_slices] for img in data_gt], axis=0)
-        case_dict['images'] = np.stack([img[brain_mask_slices] for img in data_images], axis=0)
+        case_dict['gt'] = np.stack([padd_img(img[brain_mask_slices]) for img in data_gt], axis=0)
+        case_dict['images'] = np.stack([padd_img(img[brain_mask_slices]) for img in data_images], axis=0)
+
 
     # case_dict['nifti_headers'] = list([img.header for img in data])
 
-    case_dict['mean'] = np.stack([np.mean(img) for img in case_dict['images']], axis=0).astype(np.float)
+    case_dict['mean'] = np.stack([np.mean(img) for img in case_dict['images']], axis=0)
 
-    case_dict['std_dev'] = np.stack([np.std(img) for img in case_dict['images']], axis=0).astype(np.float)
+    case_dict['std_dev'] = np.stack([np.std(img) for img in case_dict['images']], axis=0)
 
     case_dict['norm_images'] = norm_array(case_dict['images'], case_dict['mean'],  case_dict['std_dev'])
+
+    # case_dict['norm_images'] = norm_array_feature_scaling(case_dict['images'])
 
     return case_dict
 
@@ -97,6 +100,21 @@ def norm_array(images, mean, std):
         image_out[mod_idx] = (image_out[mod_idx] - m) / s
     return image_out
 
+def norm_array_feature_scaling(images):
+    """
+    :param images: array of modality images
+    :param mean: vector containing the mean of each modality
+    :param std: vector containing the standard deviation of each modality
+    :return: normalize images between 0 and 1
+    """
+
+    # image_out = np.copy(images)
+    image_out = images.astype(np.float)
+    for mod_idx in range(4):
+        image_out[mod_idx] = (image_out[mod_idx] - image_out[mod_idx].min()) / \
+                             (image_out[mod_idx].max()-image_out[mod_idx].min())
+    return image_out
+
 
 #Albert's function
 def nic_binary_accuracy(y_pred, y_true, class_dim=1):
@@ -136,3 +154,9 @@ def bbox2_ND(img):
         nonzero = np.any(img, axis=ax)
         out.extend(np.where(nonzero)[0][[0, -1]])
     return tuple(out)
+
+def padd_img(image):
+    padd = np.zeros((192, 192, 192))
+    padd[:image.shape[0], :image.shape[1], :image.shape[2]] = image
+    return padd
+
