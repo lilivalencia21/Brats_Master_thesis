@@ -1,9 +1,10 @@
 import time
-
+import numpy as np
 from torch.utils.data import Dataset
 from functions.patches import *
 import torch
 import copy
+from functions.utilities import remove_zeropad_volume
 
 from abc import ABC, abstractmethod
 
@@ -35,11 +36,12 @@ class BalancedSampler(Sampler):
 
     def get_centers(self, case):
 
-        gt = load_images(case['gt_path'], GT=True).squeeze(0)
+        # gt = load_images(case['gt_path'], GT=True).squeeze(0)
+        gt = case['gt'].squeeze(0)
 
         # Get class 0 centers
         all_centers = []
-        for label in range(1,self.num_classes+1):
+        for label in range(0,self.num_classes+1):
             class_centers = self.sample_class_centers(gt, label)
 
             index_centers = np.asarray(np.random.permutation(len(class_centers))[:self.num_elements], dtype=np.int)
@@ -52,10 +54,17 @@ class BalancedSampler(Sampler):
     def sample_class_centers(self, gt, class_label):
         centers_taple = np.where(gt == class_label)
 
-        # Put in ndarray format
         centers = []
-        for i in range(len(centers_taple[0])):
-            centers.append([centers_taple[0][i], centers_taple[1][i], centers_taple[2][i]])
+        if class_label == 0:
+            for i in range(len(centers_taple[0])):
+                centers.append([centers_taple[0][i] - 32, centers_taple[1][i]-32, centers_taple[2][i]-32])
+
+        else:
+
+        # Put in ndarray format
+
+            for i in range(len(centers_taple[0])):
+                centers.append([centers_taple[0][i], centers_taple[1][i], centers_taple[2][i]])
 
         return centers
 

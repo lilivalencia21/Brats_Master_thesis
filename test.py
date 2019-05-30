@@ -13,16 +13,16 @@ from functions.testing_functions import segment_img_patches
 
 testing_folder = {'model':UNet3D(),
                        'device': torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-                       'model_path':"/home/liliana/models/FairResults28May_Model/Debbuging_from_142_to_212_fold_3.pt",
-                       'path_to_save_segm':"/home/liliana/Results/FairResults28May/Fold3/",
-                       'path_to_save_metrics':"/home/liliana/Results/FairResults28May/Fold3/"}
+                       'model_path':"/home/liliana/models/testfolder_Model/brain_mask_from_0_to_70_fold_1.pt",
+                       'path_to_save_segm':"/home/liliana/Results/ResultsForReport/CasesOut/",
+                       'path_to_save_metrics':"/home/liliana/Results/ResultsForReport/CasesOut/"}
 
 
 # data_dir_test = "/home/liliana/Data/train"
 data_dir_test = "/home/liliana/Brats18TrainingData/"
 dataset_test = load_dataset(data_dir_test)
 # test_cross_validation(dataset_test, testing_folder)
-cases_to_validate = "/home/liliana/dataToValidate/FairResults28May_Data/cases_val_fold_3.txt"
+cases_to_validate = "/home/liliana/dataToValidate/testfolder_Data/casesToSegment.txt"
 with open(cases_to_validate) as f:
     validation_set = [line.rstrip('\n') for line in f]
 

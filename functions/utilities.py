@@ -7,6 +7,7 @@ import operator
 import random
 from functions.metrics_brats import *
 import itertools
+import math
 
 
 
@@ -141,8 +142,8 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
     if iteration == total:
         print(' ')
 
-def brain_box_img(img_flair):
-    bb = bbox2_ND(img_flair)
+def brain_box_img(imgage):
+    bb = bbox2_ND(imgage)
     brain_box_vol_slice = (slice(bb[0], bb[1]), slice(bb[2], bb[3]), slice(bb[4], bb[5]))
     return brain_box_vol_slice
 
@@ -158,5 +159,15 @@ def bbox2_ND(img):
 def padd_img(image):
     padd = np.pad(image,((16,16),(16,16),(16,16)), 'constant', constant_values=0)
     return padd
+
+def remove_zeropad_volume(volume, patch_shape):
+    # Get padding amount per each dimension
+    selection = []
+    for dim_size in patch_shape:
+        slice_start = int(math.ceil(dim_size / 2.0))
+        slice_stop = -slice_start if slice_start != 0 else None
+        selection += [slice(slice_start, slice_stop)]
+    volume = volume[tuple(selection)]
+    return volume
 
 

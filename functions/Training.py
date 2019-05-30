@@ -10,6 +10,7 @@ from functions.loss_function import *
 from functions.utilities import *
 import math
 from functions.testing_functions import segment_img
+from sklearn.model_selection import KFold
 
 
 def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, device, model_name, model_path, patience=3):
@@ -132,20 +133,17 @@ def train_net(train_gen, val_gen, model, max_epochs, optimizer, loss_function, d
 def cross_validation(dataset, params, experiment_cfg, folds=4):
 
     start = time.time()
+    # train_cases = []
+    #     # val_cases = []
 
-    indexes = np.linspace(start=0, stop=len(dataset) - 1, num=len(dataset), dtype='uint8')
-    folds = np.arange(0, 4)
-    num = int(len(indexes) / len(folds))
+    i = 0
+    kfold = KFold(5, True, 1)
+    for train_idx, val_idx in kfold.split(dataset):
+        # print('train: %s, test: %s' % (train_idx, val_idx))
 
-    # # Iterate over the dataset
-    for i, fold in enumerate(folds):
         print('=====================================')
         print('Fold Number ', i + 1)
         print('=====================================')
-
-        # Get the indexes of the cases used for training. The rest are for validation
-        val_idx = indexes[i * num:(i + 1) * num]
-        train_idx = [index for index in indexes if index not in val_idx]
 
         # Loads training and validation data
         train_set = operator.itemgetter(*train_idx)(dataset)
@@ -159,13 +157,11 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         for case in val_set:
             val_cases.append(case['id'])
 
-        # to change in future runnings to save in correct places
         trainStr = '\n'.join([str(elem) for elem in train_cases])
         file_train = open(experiment_cfg['pathToCasesNames']+'cases_train_fold_{}.txt'.format(i+1), 'w')
         file_train.write(trainStr)
         file_train.close()
 
-        #to change in future runnings to save in correct places
         valStr = '\n'.join([str(elem) for elem in val_cases])
         file_val = open(experiment_cfg['pathToCasesNames']+ 'cases_val_fold_{}.txt'.format(i+1), 'w')
         file_val.write(valStr)
@@ -192,7 +188,7 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         max_epochs = experiment_cfg['epochs']
         optimizer = optim.Adadelta(model.parameters())
         loss_function = experiment_cfg['loss_function']
-        model_name_fold = '{}_from_{}_to_{}_fold_{}.pt'.format(experiment_cfg['model_name'], val_idx[0], val_idx[-1], fold+1 )
+        model_name_fold = '{}_fold_{}.pt'.format(experiment_cfg['model_name'], i+1 )
         print ('The name of the model to save is: {}'.format(model_name_fold))
         model_path = experiment_cfg['pathToSaveModel']
         patience = experiment_cfg['patience']
@@ -204,9 +200,10 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
                           'path_to_save_segm': experiment_cfg['path_Results'],
                           'path_to_save_metrics': experiment_cfg['path_Results']}
 
-        # cases_to_validate = experiment_cfg['pathToCasesNames']+ 'cases_val_fold_{}.txt'.format(i+1)
-        # with open(cases_to_validate) as f:
-        #     validation_set = [line.rstrip('\n') for line in f]
+        cases_to_validate = experiment_cfg['pathToCasesNames']+ 'cases_val_fold_{}.txt'.format(i+1)
+
+        with open(cases_to_validate) as f:
+            validation_set = [line.rstrip('\n') for line in f]
 
         dices_file = open(testing_folder['path_to_save_metrics'] + 'dice_fold_{}.txt'.format(i+1), 'w')
         # hausdorff_file = open(testing_folder['path_to_save_metrics'] + 'hausdorff.txt', 'w')
@@ -220,7 +217,10 @@ def cross_validation(dataset, params, experiment_cfg, folds=4):
         print('Saving metrics..........')
         dices_file.close()
 
+        i = i + 1
+
     stop = time.time()
+
     print('total time for crossvalidation {0:.5f} minutes'.format((stop-start)/60))
 
 

@@ -12,8 +12,8 @@ from functions.models_sergi import ResUnet, Unet3D
 
 
 
-# data_dir_train = "/home/liliana/Data/train"
-data_dir_train = "/home/liliana/Brats18TrainingData/"
+data_dir_train = "/home/liliana/Data/train"
+# data_dir_train = "/home/liliana/Brats18TrainingData/"
 
 print("Loading dataset...")
 #load the dataset
@@ -40,13 +40,25 @@ experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
                'step' :  (16, 16, 16),
                'sampler' : UniformSampler,
                'model':UNet3D,
-               'epochs': 10,
-               'model_name': 'brain_mask_padd',
+               'epochs': 5,
+               'model_name': 'brainmaskpadd',
                'patience': 5,
                'pathToCasesNames':"/home/liliana/dataToValidate/FullDatasetPad_Data/",
                'pathToSaveModel': "/home/liliana/models/FullDatasetPad_Model/",
                 'path_Results': "/home/liliana/Results/FullDatasetPadResults/",
                'loss_function': dice_loss}
+
+# experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
+#                'step' :  (16, 16, 16),
+#                'sampler' : UniformSampler,
+#                'model':UNet3D,
+#                'epochs': 10,
+#                'model_name': 'brain_mask_padd',
+#                'patience': 5,
+#                'pathToCasesNames':"/home/liliana/dataToValidate/DatasetBalancedSam_Data/",
+#                'pathToSaveModel': "/home/liliana/models/DatasetBalancedSam_Model/",
+#                 'path_Results': "/home/liliana/Results/DatasetBalancedSamResults/",
+#                'loss_function': dice_loss}
 
 # experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=500)})
 experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'],
