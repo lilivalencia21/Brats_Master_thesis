@@ -38,11 +38,12 @@ class BalancedSampler(Sampler):
 
         # gt = load_images(case['gt_path'], GT=True).squeeze(0)
         gt = case['gt'].squeeze(0)
+        patch_shape = self.patch_shape
 
         # Get class 0 centers
         all_centers = []
         for label in range(0,self.num_classes+1):
-            class_centers = self.sample_class_centers(gt, label)
+            class_centers = self.sample_class_centers(gt, label, patch_shape)
 
             index_centers = np.asarray(np.random.permutation(len(class_centers))[:self.num_elements], dtype=np.int)
             for idx in index_centers:
@@ -51,22 +52,23 @@ class BalancedSampler(Sampler):
         return all_centers
 
 
-    def sample_class_centers(self, gt, class_label):
-        centers_taple = np.where(gt == class_label)
+    def sample_class_centers(self, gt, class_label, patch_shape):
 
-        centers = []
         if class_label == 0:
-            for i in range(len(centers_taple[0])):
-                centers.append([centers_taple[0][i] - 32, centers_taple[1][i]-32, centers_taple[2][i]-32])
+            vol_shape = gt.shape
+            step = (patch_shape[0]//2, patch_shape[1]//2, patch_shape[2]//2)
+            centers = get_centers_unif(vol_shape, patch_shape, step)
+
+            return centers
 
         else:
-
-        # Put in ndarray format
-
+            centers_taple = np.where(gt == class_label)
+            centers = []
+            # Put in ndarray format
             for i in range(len(centers_taple[0])):
                 centers.append([centers_taple[0][i], centers_taple[1][i], centers_taple[2][i]])
 
-        return centers
+            return centers
 
 
 def generate_instruction(dataset, sampler, patch_shape):
