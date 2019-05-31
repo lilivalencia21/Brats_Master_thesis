@@ -84,13 +84,15 @@ def segment_img_patches(image_case, testing_cfg):
 
     nifti_image = nib.load(image_case['image_paths'][0])
     intensity_images = load_images(image_case['image_paths'])
-    mean = image_case['mean']
-    std_dev = image_case['std_dev']
+    mean = np.stack([np.mean(img) for img in intensity_images], axis=0)
+    std_dev = np.stack([np.std(img) for img in intensity_images], axis=0)
+    # mean = image_case['mean']
+    # std_dev = image_case['std_dev']
     norm_case = norm_array(intensity_images, mean, std_dev)
 
     vol_shape = norm_case.shape[-3:]
-    patch_shape = (128,128,128)
-    unif_step = (128,128,128)
+    patch_shape = (32,32,32)
+    unif_step = (32,32,32)
     centers = get_centers_unif(vol_shape, patch_shape, unif_step)
     slices = get_patch_slices(centers, patch_shape, step=None)
 
@@ -115,9 +117,6 @@ def segment_img_patches(image_case, testing_cfg):
         results[results == 3] = 4
 
     # segmentation_result = np.squeeze(results, axis=0)
-
-
-
     segm_name = '{}.nii.gz'.format(image_case['id'])
     print('Saving image segmentation result as {}'.format(segm_name))
     save_segmentation_img(results, nifti_image, testing_cfg['path_to_save_segm'], segm_name)
