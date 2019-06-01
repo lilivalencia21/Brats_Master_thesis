@@ -58,49 +58,61 @@ class UNet3D(nn.Module):
 
 class UNet3D_Mod(nn.Module):
 
-    def __init__(self,  nfilts=4):
+    def __init__(self,  nfilts=16):
         super().__init__()
 
         Conv3d =  nn.Conv3d
         ConvTranspose3d = nn.ConvTranspose3d
+        instanceNorm3d = nn.InstanceNorm3d
 
         self.conv1 = torch.nn.Sequential(
             Conv3d(4, nfilts, 3, padding=1),
+            instanceNorm3d(nfilts, momentum=0.01),
             nn.ReLU())
         self.down1 = torch.nn.Sequential(
             Conv3d(nfilts, nfilts, 3, padding=1),
+            instanceNorm3d(nfilts, momentum=0.01),
             nn.ReLU())
 
         self.conv2 = torch.nn.Sequential(
             Conv3d(nfilts, nfilts, 3, padding=1),
+            instanceNorm3d(nfilts, momentum=0.01),
             nn.ReLU())
         self.down2 = torch.nn.Sequential(
             Conv3d(nfilts, nfilts*2, 3, padding=1),
+            instanceNorm3d(nfilts * 2, momentum=0.01),
             nn.ReLU())
 
         self.conv3 = torch.nn.Sequential(
             Conv3d(nfilts * 2, nfilts * 2, 3, padding=1),
+            instanceNorm3d(nfilts * 2, momentum=0.01),
             nn.ReLU())
         self.down3 = torch.nn.Sequential(
             Conv3d(nfilts * 2, nfilts * 4, 3, padding=1),
+            instanceNorm3d(nfilts * 4, momentum=0.01),
             nn.ReLU())
 
         self.conv4 = torch.nn.Sequential(
             Conv3d(nfilts * 4, nfilts * 4, 3, padding=1),
+            instanceNorm3d(nfilts * 4, momentum=0.01),
             nn.ReLU())
         self.down4 = torch.nn.Sequential(
             Conv3d(nfilts * 4, nfilts * 8, 3, padding=1),
+            instanceNorm3d(nfilts * 8, momentum=0.01),
             nn.ReLU())
 
         self.conv_middle = torch.nn.Sequential(
             Conv3d(nfilts * 8, nfilts * 8, 3, padding=1),
+            instanceNorm3d(nfilts * 8, momentum=0.01),
             nn.ReLU())
         self.middle = torch.nn.Sequential(
             Conv3d(nfilts * 8, nfilts * 16, 3, padding=1),
+            instanceNorm3d(nfilts * 16, momentum=0.01),
             nn.ReLU())
 
         self.conv5 = torch.nn.Sequential(
             Conv3d(nfilts * 16, nfilts * 16, 3, padding=1),
+            instanceNorm3d(nfilts * 16, momentum=0.01),
             nn.ReLU())
         self.up1 = torch.nn.Sequential(
             ConvTranspose3d(nfilts * 16, nfilts * 8, 3, padding=1),
@@ -108,6 +120,7 @@ class UNet3D_Mod(nn.Module):
 
         self.conv6 = torch.nn.Sequential(
             Conv3d(nfilts * 16, nfilts * 16, 3, padding=1),
+            instanceNorm3d(nfilts * 16, momentum=0.01),
             nn.ReLU())
         self.up2 = torch.nn.Sequential(
             ConvTranspose3d(nfilts * 16, nfilts * 4, 3, padding=1),
@@ -115,6 +128,7 @@ class UNet3D_Mod(nn.Module):
 
         self.conv7 = torch.nn.Sequential(
             Conv3d(nfilts * 8, nfilts * 8, 3, padding=1),
+            instanceNorm3d(nfilts * 8, momentum=0.01),
             nn.ReLU())
         self.up3 = torch.nn.Sequential(
             ConvTranspose3d(nfilts * 8, nfilts * 2, 3, padding=1),
@@ -122,6 +136,7 @@ class UNet3D_Mod(nn.Module):
 
         self.conv8 = torch.nn.Sequential(
             Conv3d(nfilts * 4, nfilts * 4, 3, padding=1),
+            instanceNorm3d(nfilts * 4, momentum=0.01),
             nn.ReLU())
         self.up4 = torch.nn.Sequential(
             ConvTranspose3d(nfilts * 4, nfilts, 3, padding=1),
@@ -131,7 +146,7 @@ class UNet3D_Mod(nn.Module):
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         nparams = sum([np.prod(p.size()) for p in model_parameters])
-        print("UNet3D network with {} parameters".format(nparams))
+        print("UNet3D_Mod network with {} parameters".format(nparams))
 
     def forward(self, x):
         with torch.autograd.set_detect_anomaly(True):

@@ -50,7 +50,19 @@ experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
 #                 'path_Results': "/home/liliana/Results/MoredataFIltersResults/",
 #                'loss_function': dice_loss}
 
-experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=1000)})
+experiment_nnn_cfg = {'patch_shape' : (32, 32, 32),
+               'step' :  (16, 16, 16),
+               'sampler' : BalancedSampler,
+               'model':UNet3D_Mod,
+               'epochs': 10,
+               'model_name': 'InstanceNorm',
+               'patience': 5,
+               'pathToCasesNames':"/home/liliana/dataToValidate/InstanceNorm_Data/",
+               'pathToSaveModel': "/home/liliana/models/InstanceNorm_Models/",
+               'path_Results': "/home/liliana/Results/InstanceNormResults/",
+               'loss_function': dice_loss}
+
+experiment_nnn_cfg.update({'sampler' : BalancedSampler(experiment_nnn_cfg['patch_shape'], 4, num_elements=2000)})
 # experiment_nnn_cfg.update({'sampler' : UniformSampler(experiment_nnn_cfg['patch_shape'], experiment_nnn_cfg['step'],
 #                                                       num_elements=None)})
 
